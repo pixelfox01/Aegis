@@ -1,4 +1,4 @@
----------- DAY 1 -------
+---------- DAY 1 ----------
 
 We just lost $10,500 in a hackathon, and we've only 
 been hacking for two hours...
@@ -26,3 +26,5 @@ If you don't know what that is, go enjoy that
 "grass" thing that I keep hearing about.
 
 #HackCanada2026 #NixOS #Neovim #Hackathons #BuildingInPublic
+
+---------- DAY 2 ----------
