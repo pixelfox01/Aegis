@@ -18,6 +18,9 @@
             nodePackages.npm
             nodePackages.typescript
             nodePackages.typescript-language-server
+            python314
+            uv
+            postgresql
           ];
         };
       }
