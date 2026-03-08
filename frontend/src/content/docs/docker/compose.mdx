@@ -1,11 +1,11 @@
 ---
 title: "Docker Compose Configuration"
-description: "Deploy Aegis with Docker Compose - combined or separate containers"
+description: "Deploy Raven with Docker Compose - combined or separate containers"
 ---
 
 # Docker Compose Configuration
 
-Aegis provides two deployment modes via Docker Compose.
+Raven provides two deployment modes via Docker Compose.
 
 ## Deployment Modes
 
@@ -41,12 +41,12 @@ Use the default `docker-compose.yml`:
 
 ```yaml
 services:
-  aegis:
+  raven:
     build: .
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://aegis:${POSTGRES_PASSWORD}@db:5432/aegis
+      - DATABASE_URL=postgresql://raven:${POSTGRES_PASSWORD}@db:5432/raven
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - AUTH_MODE=${AUTH_MODE:-local}
       - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
@@ -62,13 +62,13 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_USER=aegis
+      - POSTGRES_USER=raven
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=aegis
+      - POSTGRES_DB=raven
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aegis"]
+      test: ["CMD-SHELL", "pg_isready -U raven"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -109,7 +109,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://aegis:${POSTGRES_PASSWORD}@db:5432/aegis
+      - DATABASE_URL=postgresql://raven:${POSTGRES_PASSWORD}@db:5432/raven
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - AUTH_MODE=${AUTH_MODE:-local}
       - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
@@ -123,13 +123,13 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_USER=aegis
+      - POSTGRES_USER=raven
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=aegis
+      - POSTGRES_DB=raven
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aegis"]
+      test: ["CMD-SHELL", "pg_isready -U raven"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -176,7 +176,7 @@ OLLAMA_MODEL=llama2
 Pull a model:
 
 ```bash
-docker exec -it aegis-ollama-1 ollama pull llama2
+docker exec -it raven-ollama-1 ollama pull llama2
 ```
 
 ## Customization
@@ -185,7 +185,7 @@ docker exec -it aegis-ollama-1 ollama pull llama2
 
 ```yaml
 services:
-  aegis:
+  raven:
     ports:
       - "8080:8000"  # External:Internal
 ```
@@ -196,7 +196,7 @@ For persistent file storage:
 
 ```yaml
 services:
-  aegis:
+  raven:
     volumes:
       - ./data:/app/data
 ```
@@ -205,7 +205,7 @@ services:
 
 ```yaml
 services:
-  aegis:
+  raven:
     deploy:
       resources:
         limits:
@@ -219,7 +219,7 @@ services:
 
 ```bash
 docker-compose logs -f
-docker-compose logs -f aegis  # specific service
+docker-compose logs -f raven  # specific service
 ```
 
 ### Restart Services
@@ -238,5 +238,5 @@ docker-compose up -d
 ### Backup Database
 
 ```bash
-docker exec aegis-db-1 pg_dump -U aegis aegis > backup.sql
+docker exec raven-db-1 pg_dump -U raven raven > backup.sql
 ```
