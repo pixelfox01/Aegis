@@ -1,3 +1,5 @@
+import { getPolicySummary } from '../utils/api-client.js';
+
 // ── Theme ──────────────────────────────────────────────────────────────────
 
 const body = document.body;
@@ -20,10 +22,8 @@ themeToggle.addEventListener("click", () => {
   chrome.storage.local.set({ ravenTheme: dark ? "dark" : "light" });
 });
 
-// ── Score ring animation ───────────────────────────────────────────────────
-// DEMO value — replace with real score from storage/background when ready.
+// ── Score ring ─────────────────────────────────────────────────────────────
 
-const DEMO_SCORE = 28;
 const RADIUS = 26;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS; // 163.36
 
@@ -36,7 +36,7 @@ function animateScore(targetScore) {
 
   function tick(now) {
     const t = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+    const eased = 1 - Math.pow(1 - t, 3);
     const current = Math.round(eased * targetScore);
 
     scoreNum.textContent = current;
@@ -51,19 +51,92 @@ function animateScore(targetScore) {
   requestAnimationFrame(tick);
 }
 
-animateScore(DEMO_SCORE);
+// ── Data helpers ───────────────────────────────────────────────────────────
 
-// ── Active tab domain ──────────────────────────────────────────────────────
-// Populate the domain label from the current tab's URL.
+function deriveScore(answers) {
+  if (!answers?.length) return 0;
+  const points = { low: 100, medium: 50, high: 0 };
+  const total = answers.reduce((sum, a) => sum + (points[a.concern_level] ?? 50), 0);
+  return Math.round(total / answers.length);
+}
+
+function concernLevelToDotClass(level) {
+  if (level === 'high') return 'dot-bad';
+  if (level === 'medium') return 'dot-warn';
+  return 'dot-ok';
+}
+
+// ── State renderers ────────────────────────────────────────────────────────
+
+const breakdownRows = document.querySelectorAll(".breakdown-row");
+
+function setLoadingState() {
+  scoreNum.textContent = "—";
+  ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
+  breakdownRows.forEach((row) => {
+    row.querySelector(".dot").className = "dot dot-loading";
+    row.querySelector(".dim-text").textContent = "Loading...";
+    row.style.display = "";
+  });
+}
+
+function setErrorState() {
+  scoreNum.textContent = "—";
+  ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
+  breakdownRows.forEach((row) => {
+    row.querySelector(".dot").className = "dot dot-loading";
+    row.querySelector(".dim-text").textContent = "Unavailable";
+    row.style.display = "";
+  });
+}
+
+function renderData(response) {
+  const score = deriveScore(response.answers);
+  animateScore(score);
+
+  const limit = Math.min(breakdownRows.length, response.questions.length);
+
+  for (let i = 0; i < limit; i++) {
+    const level = response.answers[i]?.concern_level;
+    breakdownRows[i].querySelector(".dim-label").textContent = response.questions[i];
+    breakdownRows[i].querySelector(".dot").className = `dot ${concernLevelToDotClass(level)}`;
+    breakdownRows[i].querySelector(".dim-text").textContent = response.answers[i]?.summary_text || "";
+    breakdownRows[i].style.display = "";
+  }
+
+  // Hide unused rows if API returns fewer items than the 5 hardcoded rows
+  for (let i = limit; i < breakdownRows.length; i++) {
+    breakdownRows[i].style.display = "none";
+  }
+}
+
+// ── Active tab domain + data fetch ─────────────────────────────────────────
 
 const siteDomain = document.getElementById("siteDomain");
 
+setLoadingState();
+
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const url = tabs[0]?.url;
-  if (!url) return;
+  if (!url) { setErrorState(); return; }
+
+  let hostname;
   try {
-    siteDomain.textContent = new URL(url).hostname.replace(/^www\./, "");
+    hostname = new URL(url).hostname.replace(/^www\./, "");
+    siteDomain.textContent = hostname;
   } catch {
-    // leave placeholder
+    setErrorState();
+    return;
   }
+
+  chrome.runtime.sendMessage(
+    { type: "GET_POLICY_DATA", payload: { hostname } },
+    (response) => {
+      if (chrome.runtime.lastError || !response || response.error) {
+        setErrorState();
+      } else {
+        renderData(response);
+      }
+    }
+  );
 });

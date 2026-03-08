@@ -1,8 +1,75 @@
-chrome.runtime.onMessage.addListener((message, sender) => {
-    if (message.type !== 'POLICY_DETECTED') return;
-  
-    chrome.tabs.sendMessage(sender.tab.id, {
-      type: 'SHOW_POLICY_POPUP',
-      payload: message.payload
-    });
-  });
+import { getPolicySummary } from '../utils/api-client.js';
+
+// ── In-memory cache ───────────────────────────────────────────────────────────
+// Keyed by hostname. Cleared on service worker restart (expected MV3 behaviour).
+
+const summaryCache = new Map(); // hostname → { data, timestamp }
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCached(hostname) {
+    const entry = summaryCache.get(hostname);
+    if (!entry) return null;
+    if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+        summaryCache.delete(hostname);
+        return null;
+    }
+    return entry.data;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function deriveScore(answers) {
+    if (!answers?.length) return 0;
+    const points = { low: 100, medium: 50, high: 0 };
+    const total = answers.reduce((sum, a) => sum + (points[a.concern_level] ?? 50), 0);
+    return Math.round(total / answers.length);
+}
+
+async function getCachedOrFetch(hostname, policyType) {
+    const cached = getCached(hostname);
+    if (cached) return cached;
+
+    const raw = await getPolicySummary(hostname, policyType);
+    const data = {
+        site: hostname,
+        score: deriveScore(raw.answers),
+        questions: raw.questions,
+        answers: raw.answers,
+    };
+    summaryCache.set(hostname, { data, timestamp: Date.now() });
+    return data;
+}
+
+// ── Message handler ───────────────────────────────────────────────────────────
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'POLICY_DETECTED') {
+        const { site, policies } = message.payload;
+        const tabId = sender.tab?.id;
+        if (!tabId) return;
+
+        getCachedOrFetch(site, policies[0])
+            .then((data) => {
+                chrome.tabs.sendMessage(tabId, { type: 'SHOW_POLICY_POPUP', payload: data }, () => {
+                    // Suppress "no receiver" errors if the tab navigated away
+                    void chrome.runtime.lastError;
+                });
+            })
+            .catch(() => {
+                chrome.tabs.sendMessage(tabId, {
+                    type: 'SHOW_POLICY_POPUP',
+                    payload: { site, error: true }
+                }, () => { void chrome.runtime.lastError; });
+            });
+    }
+
+    if (message.type === 'GET_POLICY_DATA') {
+        const { hostname } = message.payload;
+
+        getCachedOrFetch(hostname, 'privacy')
+            .then((data) => sendResponse(data))
+            .catch(() => sendResponse({ error: true }));
+
+        return true; // keep message channel open for async sendResponse
+    }
+});

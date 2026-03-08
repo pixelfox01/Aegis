@@ -9,7 +9,8 @@
     "storage",
     "tabs",
     "activeTab",
-    "webRequest"
+    "webRequest",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -31,6 +32,13 @@
   "action": {
     "default_popup": "interface/interface.html"
   },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["summary-popup/policy-summary.css"],
+      "matches": ["<all_urls>"]
+    }
+  ],
 
   "content_security_policy": {
     "extension_pages": "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; img-src 'self' data:"

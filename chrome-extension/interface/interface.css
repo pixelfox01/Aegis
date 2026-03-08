@@ -339,6 +339,12 @@ body {
   box-shadow: 0 0 6px var(--glow-ok);
 }
 
+.dot-loading {
+  background: var(--ink);
+  opacity: 0.2;
+  box-shadow: none;
+}
+
 .dim-text {
   font-size: 10px;
   color: var(--ink);
