@@ -16,9 +16,6 @@ const SCORE_MAP: Record<string, Record<string, number>> = {
 	data_encryption:    { essential: 100, preferred: 50, indifferent: 0 },
 	gdpr_rights:        { important: 100, somewhat: 50, unconcerned: 0 },
 	opt_out:            { required: 100, nice: 50, unnecessary: 0 },
-	data_encryption:    { essential: 100, preferred: 50, indifferent: 0 },
-	gdpr_rights:        { important: 100, somewhat: 50, unconcerned: 0 },
-	opt_out:            { required: 100, nice: 50, unnecessary: 0 },
 };
 
 function computeScore(prefs: Record<string, string>): number {
