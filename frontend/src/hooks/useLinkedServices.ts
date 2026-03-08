@@ -4,30 +4,34 @@ import { env } from '../config/env'
 
 export interface LinkedService {
   name: string
-  domain: string
-  linkedAt: string
+  domain: string   // populated from agreement_type (e.g. "Privacy Policy")
+  linkedAt: string // formatted from created_at ISO timestamp
 }
 
-// Placeholder fallback used until GET /users/me/services is implemented.
-const FALLBACK_SERVICES: LinkedService[] = [
-  { name: "Google",   domain: "google.com",   linkedAt: "2026-01-10" },
-  { name: "Discord",  domain: "discord.com",  linkedAt: "2026-01-22" },
-  { name: "Spotify",  domain: "spotify.com",  linkedAt: "2026-02-03" },
-  { name: "GitHub",   domain: "github.com",   linkedAt: "2026-02-14" },
-  { name: "Amazon",   domain: "amazon.com",   linkedAt: "2026-02-20" },
-  { name: "Reddit",   domain: "reddit.com",   linkedAt: "2026-02-28" },
-  { name: "Twitch",   domain: "twitch.tv",    linkedAt: "2026-03-01" },
-  { name: "LinkedIn", domain: "linkedin.com", linkedAt: "2026-03-05" },
-]
+// Raw shape returned by GET /api/accounts
+interface AccountRecord {
+  id: number
+  agreement_id: number
+  company_name: string
+  agreement_type: string
+  created_at: string
+}
+
+function toLinkedService(record: AccountRecord): LinkedService {
+  return {
+    name: record.company_name,
+    domain: record.agreement_type,
+    linkedAt: record.created_at.split('T')[0], // "2026-03-08T12:30:45" → "2026-03-08"
+  }
+}
 
 async function fetchServices(token: string): Promise<LinkedService[]> {
-  const res = await fetch(`${env.apiUrl}/users/me/services`, {
+  const res = await fetch(`${env.apiUrl}/api/accounts`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error(`${res.status}`)
-  const data = await res.json()
-  // Accept either { services: [...] } or a bare array.
-  return Array.isArray(data) ? data : data.services
+  const data: AccountRecord[] = await res.json()
+  return data.map(toLinkedService)
 }
 
 function useAuth0LinkedServices() {
@@ -41,7 +45,7 @@ function useAuth0LinkedServices() {
     getAccessTokenSilently()
       .then(fetchServices)
       .then(setServices)
-      .catch(() => setServices(FALLBACK_SERVICES))
+      .catch(() => setServices([]))
       .finally(() => setLoading(false))
   }, [isAuthenticated, getAccessTokenSilently])
 
@@ -54,11 +58,11 @@ function useLocalLinkedServices() {
 
   useEffect(() => {
     const token = localStorage.getItem('aegis_token')
-    if (!token) { setServices(FALLBACK_SERVICES); setLoading(false); return }
+    if (!token) { setLoading(false); return }
 
     fetchServices(token)
       .then(setServices)
-      .catch(() => setServices(FALLBACK_SERVICES))
+      .catch(() => setServices([]))
       .finally(() => setLoading(false))
   }, [])
 

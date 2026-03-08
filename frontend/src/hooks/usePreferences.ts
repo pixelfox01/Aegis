@@ -50,6 +50,14 @@ export const PREF_OPTIONS: Record<string, { value: string; label: string }[]> = 
   ],
 }
 
+// Raw shape returned by GET /api/users/preferences
+interface PreferenceRecord {
+  question_id: number
+  question_text: string
+  survey_key: string
+  priority: string
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function readLocalPrefs(): Preferences {
@@ -61,19 +69,21 @@ function readLocalPrefs(): Preferences {
 }
 
 async function fetchPreferences(token: string): Promise<Preferences> {
-  const res = await fetch(`${env.apiUrl}/users/me/preferences`, {
+  const res = await fetch(`${env.apiUrl}/api/users/preferences`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error(`${res.status}`)
-  const data = await res.json()
-  return (data.preferences && typeof data.preferences === 'object')
-    ? data.preferences
-    : data
+  const data: { preferences: PreferenceRecord[] } = await res.json()
+  // Reduce the array into a flat { survey_key: priority } map.
+  return data.preferences.reduce<Preferences>((acc, p) => {
+    if (p.survey_key) acc[p.survey_key] = p.priority
+    return acc
+  }, {})
 }
 
 async function postPreferences(token: string, prefs: Preferences): Promise<void> {
-  const res = await fetch(`${env.apiUrl}/users/me/preferences`, {
-    method: 'POST',
+  const res = await fetch(`${env.apiUrl}/api/users/preferences`, {
+    method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
