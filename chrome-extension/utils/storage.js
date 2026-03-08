@@ -2,6 +2,7 @@ const DEFAULTS = {
     API_URL: 'http://localhost:8000',
     SELF_HOSTED: false,
     AUTH_TOKEN: null,
+    ONBOARDED: false,
     COOKIE_PREFERENCES: {
         functional: false,
         analytics: false,
@@ -62,5 +63,21 @@ export function getCookiePreferences() {
 export function setCookiePreferences(preferences) {
     return new Promise((resolve) => {
         chrome.storage.sync.set({ COOKIE_PREFERENCES: preferences }, resolve);
+    });
+}
+
+// ── Onboarding ───────────────────────────────────────────────────────────────
+
+export function getOnboarded() {
+    return new Promise((resolve) => {
+        chrome.storage.sync.get('ONBOARDED', (result) => {
+            resolve(result.ONBOARDED ?? DEFAULTS.ONBOARDED);
+        });
+    });
+}
+
+export function setOnboarded(value) {
+    return new Promise((resolve) => {
+        chrome.storage.sync.set({ ONBOARDED: value }, resolve);
     });
 }

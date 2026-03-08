@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="onboarding.css" />
+</head>
+<body class="theme-dark">
+
+  <!-- Background layers (matching interface) -->
+  <div class="grain"></div>
+  <div class="orb"></div>
+
+  <!-- Nav (same as interface) -->
+  <header class="nav">
+    <button class="logo" id="ravenLogo" title="Visit Raven">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2C6 2 3 7 3 12c0 3 1.5 5.5 4 7l5-9 5 9c2.5-1.5 4-4 4-7 0-5-3-10-9-10z"/>
+      </svg>
+      Raven
+    </button>
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <span class="toggle-icon icon-sun">☀️</span>
+      <span class="toggle-icon icon-moon">🌙</span>
+      <span class="toggle-knob"></span>
+    </button>
+  </header>
+
+  <!-- Step 1: Welcome / Connect -->
+  <section class="onboard-step" id="stepWelcome">
+    <div class="onboard-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2C6 2 3 7 3 12c0 3 1.5 5.5 4 7l5-9 5 9c2.5-1.5 4-4 4-7 0-5-3-10-9-10z"/>
+      </svg>
+    </div>
+    <h1 class="onboard-heading">See what you're<br/>really agreeing to.</h1>
+    <p class="onboard-body">
+      Raven reads the fine print so you don't have to. Connect your dashboard to get started.
+    </p>
+    <button class="onboard-btn-primary" id="btnConnect">
+      Connect to Dashboard <span class="arrow">→</span>
+    </button>
+    <p class="onboard-hint">
+      Already have a token? <button class="onboard-link" id="btnManualEntry">Enter manually</button>
+    </p>
+  </section>
+
+  <!-- Step 2: Manual token entry (hidden by default) -->
+  <section class="onboard-step onboard-hidden" id="stepToken">
+    <p class="onboard-eyebrow">Configuration</p>
+    <h2 class="onboard-heading-sm">Paste your API token</h2>
+    <p class="onboard-body-sm">
+      Find this in your Raven dashboard under Settings → API Keys.
+    </p>
+    <div class="token-field-wrap">
+      <input
+        type="password"
+        class="token-field"
+        id="tokenInput"
+        placeholder="raven_xxxxxxxxxxxxxxxx"
+        spellcheck="false"
+        autocomplete="off"
+      />
+      <button class="token-reveal" id="tokenReveal" title="Show/hide token">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Self-hosted toggle -->
+    <div class="option-row">
+      <label class="option-label" for="selfHostedToggle">Self-hosted server</label>
+      <button class="mini-toggle" id="selfHostedToggle" role="switch" aria-checked="false">
+        <span class="mini-toggle-knob"></span>
+      </button>
+    </div>
+
+    <!-- API URL (visible only when self-hosted) -->
+    <div class="api-url-wrap onboard-hidden" id="apiUrlWrap">
+      <label class="option-label" for="apiUrlInput">Server URL</label>
+      <input
+        type="url"
+        class="token-field"
+        id="apiUrlInput"
+        placeholder="https://raven.yourdomain.com"
+        spellcheck="false"
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="onboard-actions">
+      <button class="onboard-btn-ghost" id="btnBackToWelcome">← Back</button>
+      <button class="onboard-btn-primary" id="btnSaveToken" disabled>
+        Save &amp; Continue <span class="arrow">→</span>
+      </button>
+    </div>
+    <p class="onboard-error onboard-hidden" id="tokenError">
+      Could not verify token. Please check and try again.
+    </p>
+  </section>
+
+  <!-- Step 3: Success (brief, auto-transitions to main interface) -->
+  <section class="onboard-step onboard-hidden" id="stepSuccess">
+    <div class="success-check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <h2 class="onboard-heading-sm">You're all set.</h2>
+    <p class="onboard-body-sm">Raven is now watching the fine print for you.</p>
+  </section>
+
+  <script type="module" src="onboarding.js"></script>
+</body>
+</html>

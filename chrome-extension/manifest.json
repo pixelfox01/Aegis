@@ -9,6 +9,7 @@
     "storage",
     "tabs",
     "activeTab",
+    "identity",
     "webRequest",
     "declarativeNetRequest"
   ],
@@ -36,7 +37,7 @@
   },
 
   "action": {
-    "default_popup": "interface/interface.html",
+    "default_popup": "popup-router.html",
     "default_icon": {
       "16": "icons/icon-dark.png",
       "32": "icons/icon-dark.png",
