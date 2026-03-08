@@ -60,16 +60,9 @@ function deriveScore(answers) {
   return Math.round(total / answers.length);
 }
 
-function concernLevelToDotClass(level) {
-  if (level === 'high') return 'dot-bad';
-  if (level === 'medium') return 'dot-warn';
-  if (level === 'low') return 'dot-ok';
-  return 'dot-muted';
-}
-
 // ── Fixed metric definitions ────────────────────────────────────────────────
-// Each metric scans the API's question list for keyword matches and takes the
-// concern_level of the first matching answer.
+// Each metric scans the API's question list for keyword matches.
+// Rows are shown only when a matching answer is found; otherwise hidden.
 
 const METRICS = {
   cookies:  ['cookie', 'cookies', 'non-essential', 'consent'],
@@ -77,57 +70,48 @@ const METRICS = {
   services: ['location', 'geolocation', 'microphone', 'camera', 'permission', 'sensor'],
 };
 
-const metricDots = {
-  cookies:  document.querySelector('#metricCookies .dot'),
-  trackers: document.querySelector('#metricTrackers .dot'),
-  services: document.querySelector('#metricServices .dot'),
-  account:  document.querySelector('#metricAccount .dot'),
+const metricRows = {
+  cookies:  document.getElementById('metricCookies'),
+  trackers: document.getElementById('metricTrackers'),
+  services: document.getElementById('metricServices'),
+  account:  document.getElementById('metricAccount'),
 };
 
-const scorePct = document.getElementById("scorePct");
-
-function findConcernForMetric(questions, answers, keywords) {
-  if (!questions?.length) return null;
-  for (let i = 0; i < questions.length; i++) {
-    const q = questions[i].toLowerCase();
-    if (keywords.some(kw => q.includes(kw))) return answers[i]?.concern_level ?? null;
-  }
-  return null;
+function hasMatchForMetric(questions, keywords) {
+  if (!questions?.length) return false;
+  return questions.some(q => keywords.some(kw => q.toLowerCase().includes(kw)));
 }
 
 // ── State renderers ────────────────────────────────────────────────────────
 
 function setLoadingState() {
   scoreNum.textContent = "—";
-  scorePct.style.visibility = "hidden";
   ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
-  metricDots.cookies?.setAttribute  ('class', 'dot dot-loading');
-  metricDots.trackers?.setAttribute ('class', 'dot dot-loading');
-  metricDots.services?.setAttribute ('class', 'dot dot-loading');
-  metricDots.account?.setAttribute  ('class', 'dot dot-muted');
+  Object.values(metricRows).forEach(row => { if (row) row.style.display = 'none'; });
 }
 
 function setErrorState() {
   scoreNum.textContent = "—";
-  scorePct.style.visibility = "hidden";
   ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
-  metricDots.cookies?.setAttribute  ('class', 'dot dot-muted');
-  metricDots.trackers?.setAttribute ('class', 'dot dot-muted');
-  metricDots.services?.setAttribute ('class', 'dot dot-muted');
-  metricDots.account?.setAttribute  ('class', 'dot dot-muted');
+  Object.values(metricRows).forEach(row => { if (row) row.style.display = 'none'; });
 }
 
 function renderData(response) {
   animateScore(deriveScore(response.answers));
-  scorePct.style.visibility = "";
 
   for (const [metric, keywords] of Object.entries(METRICS)) {
-    const level = findConcernForMetric(response.questions, response.answers, keywords);
-    metricDots[metric]?.setAttribute('class', `dot ${concernLevelToDotClass(level)}`);
+    const row = metricRows[metric];
+    if (row) row.style.display = hasMatchForMetric(response.questions, keywords) ? '' : 'none';
   }
-  // account is always placeholder
-  metricDots.account?.setAttribute('class', 'dot dot-muted');
+  // account: always hidden until implemented
+  if (metricRows.account) metricRows.account.style.display = 'none';
 }
+
+// ── Logo → landing page ────────────────────────────────────────────────────
+
+document.getElementById("ravenLogo").addEventListener("click", () => {
+  chrome.tabs.create({ url: "https://example.com" }); // TODO: update with landing page URL
+});
 
 // ── Active tab domain + data fetch ─────────────────────────────────────────
 

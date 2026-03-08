@@ -16,12 +16,12 @@
 
   <!-- Nav -->
   <header class="nav">
-    <span class="logo">
+    <button class="logo" id="ravenLogo" title="Visit Raven">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2C6 2 3 7 3 12c0 3 1.5 5.5 4 7l5-9 5 9c2.5-1.5 4-4 4-7 0-5-3-10-9-10z"/>
       </svg>
       Raven
-    </span>
+    </button>
     <button class="theme-toggle" id="themeToggle" title="Toggle theme">
       <span class="toggle-icon icon-sun">☀️</span>
       <span class="toggle-icon icon-moon">🌙</span>
@@ -64,22 +64,18 @@
 
     <div class="breakdown-row" id="metricCookies">
       <span class="dim-label">Unnecessary cookies</span>
-      <span class="dot dot-loading"></span>
     </div>
 
     <div class="breakdown-row" id="metricTrackers">
       <span class="dim-label">Trackers</span>
-      <span class="dot dot-loading"></span>
     </div>
 
     <div class="breakdown-row" id="metricServices">
       <span class="dim-label">Browser permissions</span>
-      <span class="dot dot-loading"></span>
     </div>
 
     <div class="breakdown-row" id="metricAccount">
       <span class="dim-label">Existing account</span>
-      <span class="dot dot-muted"></span>
     </div>
   </section>
 
@@ -87,12 +83,6 @@
   <footer class="popup-footer">
     <button class="footer-link">
       View full report <span class="arrow">→</span>
-    </button>
-    <button class="footer-icon" title="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
     </button>
   </footer>
 
