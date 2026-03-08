@@ -52,20 +52,21 @@ function Docs() {
             →
           </button>
         )}
+
+        <button
+          className={`floating-theme-toggle ${visible ? 'visible' : ''}`}
+          onClick={() => setDark(!dark)}
+          title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          <span className="toggle-icon icon-sun">☀️</span>
+          <span className="toggle-icon icon-moon">🌙</span>
+          <span className="toggle-knob" />
+        </button>
         
         <aside className={`docs-sidebar ${sidebarOpen ? 'open' : 'closed'} ${visible ? 'visible' : ''}`}>
           <div className="docs-sidebar-header">
             <h2>Documentation</h2>
             <div className="sidebar-actions">
-              <button
-                className="theme-toggle"
-                onClick={() => setDark(!dark)}
-                title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                <span className="toggle-icon icon-sun">☀️</span>
-                <span className="toggle-icon icon-moon">🌙</span>
-                <span className="toggle-knob" />
-              </button>
               <button 
                 className="sidebar-toggle"
                 onClick={() => setSidebarOpen(!sidebarOpen)}

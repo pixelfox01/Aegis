@@ -201,6 +201,29 @@
 }
 
 /* ── THEME TOGGLE ── */
+.floating-theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 101;
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  background: var(--btn-hover-bg);
+  cursor: pointer;
+  transition: background 0.4s ease, border-color 0.4s ease, opacity 0.6s ease, transform 0.6s ease;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.floating-theme-toggle.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .theme-toggle {
   width: 48px;
   height: 26px;
@@ -342,6 +365,7 @@
 
 .docs-sidebar.closed ~ .docs-content {
   margin-left: 0;
+  padding-left: 80px;
 }
 
 /* ── TABLE OF CONTENTS ── */
