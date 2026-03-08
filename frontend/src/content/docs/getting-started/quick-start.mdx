@@ -1,0 +1,111 @@
+# Quick Start Guide
+
+Get Aegis running in under 5 minutes with this quick start guide.
+
+<Steps>
+  <Step title="Clone the Repository">
+    First, clone the Aegis repository to your local machine:
+
+    ```bash
+    git clone https://github.com/your-org/aegis.git
+    cd aegis
+    ```
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Copy the example environment file and configure it with your settings:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Edit the `.env` file with your preferred text editor:
+
+    ```bash
+    nano .env
+    ```
+
+    <Tip>
+    At minimum, you'll need to set `SECRET_KEY` and your Auth0 credentials. See the [Configuration](/docs/configuration/environment) guide for details.
+    </Tip>
+  </Step>
+
+  <Step title="Pull Docker Images">
+    Pull the latest Aegis images from DockerHub:
+
+    ```bash
+    docker compose pull
+    ```
+
+    This downloads the pre-built images for the frontend, backend, and database.
+  </Step>
+
+  <Step title="Start Services">
+    Start all Aegis services:
+
+    ```bash
+    docker compose up -d
+    ```
+
+    The `-d` flag runs containers in the background.
+  </Step>
+
+  <Step title="Initialize Database">
+    Run database migrations to set up the schema:
+
+    ```bash
+    docker compose exec backend python -m alembic upgrade head
+    ```
+  </Step>
+
+  <Step title="Access Aegis">
+    Open your browser and navigate to:
+
+    ```
+    http://localhost:3000
+    ```
+
+    You should see the Aegis login page!
+  </Step>
+</Steps>
+
+## Next Steps
+
+<Card title="Configure Authentication" href="/docs/configuration/auth">
+  Set up Auth0 or your preferred authentication provider
+</Card>
+
+<Card title="Customize Settings" href="/docs/configuration/environment">
+  Learn about all available configuration options
+</Card>
+
+<Card title="Install Chrome Extension" href="/docs/extension/installation">
+  Install the browser extension to start tracking terms and conditions
+</Card>
+
+## Troubleshooting
+
+If you encounter issues during setup, check our [troubleshooting guide](/docs/troubleshooting/common-issues).
+
+<AccordionGroup>
+  <Accordion title="Containers won't start">
+    Check Docker logs: `docker compose logs`
+    
+    Common issues:
+    - Port already in use
+    - Insufficient memory
+    - Docker daemon not running
+  </Accordion>
+
+  <Accordion title="Cannot access on localhost:3000">
+    Verify the container is running:
+    ```bash
+    docker compose ps
+    ```
+    
+    Check if the port is available:
+    ```bash
+    lsof -i :3000
+    ```
+  </Accordion>
+</AccordionGroup>
