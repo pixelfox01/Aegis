@@ -1,4 +1,4 @@
-import { extractCompanyName } from '../utils/api-client.js';
+import { extractCompanyName, getUserAccountForCompany } from '../utils/api-client.js';
 
 // ── Theme ──────────────────────────────────────────────────────────────────
 
@@ -96,15 +96,22 @@ function setErrorState() {
   Object.values(metricRows).forEach(row => { if (row) row.style.display = 'none'; });
 }
 
+const breakdownEmpty = document.getElementById('breakdownEmpty');
+
 function renderData(response) {
   animateScore(deriveScore(response.answers));
 
+  let anyVisible = false;
   for (const [metric, keywords] of Object.entries(METRICS)) {
     const row = metricRows[metric];
-    if (row) row.style.display = hasMatchForMetric(response.questions, keywords) ? '' : 'none';
+    const visible = hasMatchForMetric(response.questions, keywords);
+    if (row) row.style.display = visible ? '' : 'none';
+    if (visible) anyVisible = true;
   }
   // account: always hidden until implemented
   if (metricRows.account) metricRows.account.style.display = 'none';
+
+  if (breakdownEmpty) breakdownEmpty.style.display = anyVisible ? 'none' : '';
 }
 
 // ── Logo → landing page ────────────────────────────────────────────────────
@@ -116,6 +123,7 @@ document.getElementById("ravenLogo").addEventListener("click", () => {
 // ── Active tab domain + data fetch ─────────────────────────────────────────
 
 const siteDomain = document.getElementById("siteDomain");
+const siteSub = document.getElementById("siteSub");
 const faviconImg = document.getElementById("faviconImg");
 const viewFullReportBtn = document.querySelector(".footer-link");
 
@@ -141,6 +149,11 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     setErrorState();
     return;
   }
+
+  // Account status
+  getUserAccountForCompany(hostname)
+    .then(() => { if (siteSub) siteSub.textContent = 'Account already created'; })
+    .catch(() => { if (siteSub) siteSub.textContent = ''; });
 
   chrome.runtime.sendMessage(
     { type: "GET_POLICY_DATA", payload: { hostname } },

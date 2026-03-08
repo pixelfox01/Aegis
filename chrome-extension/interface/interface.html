@@ -37,10 +37,12 @@
       </div>
       <div class="site-meta">
         <span class="site-domain" id="siteDomain">example.com</span>
-        <span class="site-sub">Active tab</span>
+        <span class="site-sub" id="siteSub"></span>
       </div>
     </div>
 
+    <div class="score-col">
+    <span class="score-eyebrow">Values alignment</span>
     <div class="score-wrap">
       <svg class="score-svg" viewBox="0 0 64 64" id="scoreRing">
         <circle class="ring-track" cx="32" cy="32" r="26" />
@@ -54,13 +56,14 @@
         </div>
       </div>
     </div>
+    </div><!-- /.score-col -->
   </div>
 
   <div class="divider"></div>
 
   <!-- Breakdown -->
   <section class="breakdown">
-    <p class="section-eyebrow">Values alignment</p>
+    <p class="section-eyebrow">Currently Sharing</p>
 
     <div class="breakdown-row" id="metricCookies">
       <span class="dim-label">Unnecessary cookies</span>
@@ -77,6 +80,10 @@
     <div class="breakdown-row" id="metricAccount">
       <span class="dim-label">Existing account</span>
     </div>
+
+    <p class="breakdown-empty" id="breakdownEmpty">
+      This website isn't requesting anything beyond what's necessary.
+    </p>
   </section>
 
   <!-- Footer -->
