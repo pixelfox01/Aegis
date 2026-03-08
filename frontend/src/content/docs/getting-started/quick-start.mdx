@@ -1,0 +1,81 @@
+---
+title: "Quick Start"
+description: "Get Aegis up and running in minutes with Docker Compose"
+---
+
+# Quick Start
+
+Get Aegis running on your infrastructure in just a few minutes.
+
+## Prerequisites
+
+- Docker Engine 20.10 or later
+- Docker Compose 2.0 or later
+- 2GB available RAM
+- PostgreSQL database (included in docker-compose)
+
+## Installation Steps
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-org/aegis.git
+cd aegis
+```
+
+### 2. Configure Environment
+
+Copy the example environment file and configure it:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set at minimum:
+
+```bash
+POSTGRES_PASSWORD=your_secure_database_password
+JWT_SECRET_KEY=$(openssl rand -hex 32)
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+### 3. Start Aegis
+
+**Combined deployment (single container):**
+
+```bash
+docker-compose up -d
+```
+
+**Separate deployment (frontend + backend):**
+
+```bash
+docker-compose -f docker-compose.separate.yml up -d
+```
+
+### 4. Access Aegis
+
+Open your browser and navigate to:
+
+- **Combined deployment**: http://localhost:8000
+- **Separate deployment**: http://localhost:3000
+
+### 5. Create Admin Account
+
+On first launch, you'll be prompted to create an admin account. Choose a strong password.
+
+## Verify Installation
+
+Check that all services are running:
+
+```bash
+docker-compose ps
+```
+
+All services should show as `Up` or `healthy`.
+
+## Next Steps
+
+- Configure environment variables for your needs
+- Set up LLM provider (Gemini or Ollama)
+- Review security settings

@@ -3,7 +3,7 @@ from app.db import SessionDep
 from sqlmodel import select
 from app.models import Agreement, Summary
 
-router = APIRouter(prefix="/summary", tags=["summary"])
+router = APIRouter(prefix="/api/summary", tags=["summary"])
 
 
 @router.get("/{company_name}")

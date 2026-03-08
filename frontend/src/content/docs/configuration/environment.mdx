@@ -1,0 +1,167 @@
+---
+title: "Environment Variables"
+description: "Complete reference for configuring Aegis using environment variables"
+---
+
+# Environment Variables
+
+Configure Aegis using environment variables in your `.env` file.
+
+## Core Configuration
+
+### Database
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | Yes | - |
+| `POSTGRES_USER` | Database username | Yes | `aegis` |
+| `POSTGRES_PASSWORD` | Database password | Yes | - |
+| `POSTGRES_DB` | Database name | Yes | `aegis` |
+
+### Authentication
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `AUTH_MODE` | Authentication mode: `local` or `auth0` | No | `local` |
+| `JWT_SECRET_KEY` | Secret key for JWT tokens | Yes | - |
+
+**Local Auth Mode:**
+- Simple username/password authentication
+- Single admin user
+- No external dependencies
+
+**Auth0 Mode** (requires additional config):
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `VITE_AUTH0_DOMAIN` | Auth0 tenant domain | Yes (if auth0) |
+| `VITE_AUTH0_CLIENT_ID` | Auth0 client ID | Yes (if auth0) |
+
+## LLM Configuration
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `LLM_PROVIDER` | LLM provider: `gemini` or `ollama` | No | `gemini` |
+
+### Gemini (Cloud API)
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `GEMINI_API_KEY` | Google Gemini API key | Yes (if provider=gemini) |
+
+### Ollama (Local/Self-hosted)
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `OLLAMA_BASE_URL` | Ollama server URL | No | `http://localhost:11434` |
+| `OLLAMA_MODEL` | Model to use | No | `llama2` |
+
+## Server Configuration
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `HOST` | Server host address | No | `0.0.0.0` |
+| `PORT` | Server port | No | `8000` |
+| `CORS_ORIGINS` | Allowed CORS origins (comma-separated) | No | `http://localhost:3000` |
+
+## Optional Services
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `BACKBOARD_API_KEY` | Backboard SDK API key | No | - |
+
+## Example .env Files
+
+### Minimal Configuration (Local Auth + Gemini)
+
+```bash
+# Database
+DATABASE_URL=postgresql://aegis:SecurePass123@db:5432/aegis
+POSTGRES_PASSWORD=SecurePass123
+
+# Authentication
+JWT_SECRET_KEY=generate_with_openssl_rand_hex_32
+AUTH_MODE=local
+
+# LLM
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Server
+CORS_ORIGINS=http://localhost:8000
+```
+
+### Advanced Configuration (Auth0 + Ollama)
+
+```bash
+# Database
+DATABASE_URL=postgresql://aegis:SecurePass123@db:5432/aegis
+POSTGRES_PASSWORD=SecurePass123
+
+# Authentication
+JWT_SECRET_KEY=generate_with_openssl_rand_hex_32
+AUTH_MODE=auth0
+VITE_AUTH0_DOMAIN=your-tenant.us.auth0.com
+VITE_AUTH0_CLIENT_ID=your_auth0_client_id
+
+# LLM
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama2
+
+# Server
+CORS_ORIGINS=http://localhost:8000,https://aegis.yourdomain.com
+PORT=8000
+
+# Optional
+BACKBOARD_API_KEY=your_backboard_key
+```
+
+<Warning>
+Never commit your `.env` file to version control. It contains sensitive credentials.
+</Warning>
+
+## Generating Secrets
+
+### SECRET_KEY
+
+Generate a secure random secret:
+
+```bash
+openssl rand -hex 32
+```
+
+### Database Password
+
+Generate a strong password:
+
+```bash
+openssl rand -base64 32
+```
+
+<Tip>
+Store these secrets in a password manager and use different values for development and production environments.
+</Tip>
+
+## Environment-Specific Configuration
+
+### Development
+
+```bash
+# .env.development
+VITE_API_URL=http://localhost:8000
+LOG_LEVEL=debug
+```
+
+### Production
+
+```bash
+# .env.production
+VITE_API_URL=https://api.yourdomain.com
+LOG_LEVEL=warning
+WORKERS=8
+```
+
+<Info>
+Docker Compose will automatically load `.env` files from the project root.
+</Info>
