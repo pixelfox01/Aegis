@@ -68,7 +68,12 @@ import {
   // with access_token in the URL hash
   
   btnConnect.addEventListener('click', async () => {
+    console.log('[Raven] Connect button clicked');
+    console.log('[Raven] chrome.identity available?', !!chrome.identity);
+    console.log('[Raven] chrome.identity.launchWebAuthFlow available?', !!chrome.identity?.launchWebAuthFlow);
+    
     if (!chrome.identity?.launchWebAuthFlow) {
+      console.error('[Raven] chrome.identity.launchWebAuthFlow not available - falling back to manual entry');
       // Fallback to manual entry if chrome.identity not available
       showStep(stepToken);
       return;
@@ -84,11 +89,18 @@ import {
     });
     
     const loginUrl = `https://${CONFIG.AUTH0_DOMAIN}/authorize?${auth0Params.toString()}`;
+    console.log('[Raven] Opening Auth0 login:', loginUrl);
+    console.log('[Raven] Callback URL:', AUTH_CALLBACK_URL);
   
     chrome.identity.launchWebAuthFlow(
       { url: loginUrl, interactive: true },
       async (redirectUrl) => {
+        console.log('[Raven] Auth flow callback received');
+        console.log('[Raven] Redirect URL:', redirectUrl);
+        console.log('[Raven] Last error:', chrome.runtime.lastError);
+        
         if (chrome.runtime.lastError || !redirectUrl) {
+          console.error('[Raven] Auth flow failed:', chrome.runtime.lastError?.message);
           // User closed the window or flow failed — fall back to manual
           showStep(stepToken);
           return;
@@ -98,6 +110,7 @@ import {
           // Auth0 returns token in URL hash (#access_token=...)
           const hashParams = new URLSearchParams(redirectUrl.split('#')[1]);
           const token = hashParams.get('access_token');
+          console.log('[Raven] Token extracted:', token ? 'YES' : 'NO');
           
           if (token) {
             // Save API URL from config
@@ -105,10 +118,11 @@ import {
             await setSelfHosted(false);
             await saveAndFinish(token);
           } else {
+            console.error('[Raven] No access_token in redirect URL');
             showStep(stepToken);
           }
         } catch (error) {
-          console.error('Auth0 flow error:', error);
+          console.error('[Raven] Auth0 flow error:', error);
           showStep(stepToken);
         }
       }
