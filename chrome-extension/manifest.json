@@ -11,7 +11,8 @@
     "activeTab",
     "identity",
     "webRequest",
-    "declarativeNetRequest"
+    "declarativeNetRequest",
+    "contentSettings"
   ],
   "host_permissions": [
     "<all_urls>"

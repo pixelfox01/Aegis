@@ -1,5 +1,3 @@
-import { extractCompanyName, getUserAccountForCompany } from '../utils/api-client.js';
-
 // ── Theme ──────────────────────────────────────────────────────────────────
 
 const body = document.body;
@@ -25,7 +23,7 @@ themeToggle.addEventListener("click", () => {
 // ── Score ring ─────────────────────────────────────────────────────────────
 
 const RADIUS = 26;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS; // 163.36
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 const ringFill = document.getElementById("ringFill");
 const scoreNum = document.getElementById("scoreNum");
@@ -33,181 +31,151 @@ const scoreNum = document.getElementById("scoreNum");
 function animateScore(targetScore) {
   const duration = 1000;
   const start = performance.now();
-
   function tick(now) {
     const t = Math.min((now - start) / duration, 1);
     const eased = 1 - Math.pow(1 - t, 3);
     const current = Math.round(eased * targetScore);
-
     scoreNum.textContent = current;
-    ringFill.setAttribute(
-      "stroke-dashoffset",
-      CIRCUMFERENCE - (current / 100) * CIRCUMFERENCE
-    );
-
+    ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE - (current / 100) * CIRCUMFERENCE);
     if (t < 1) requestAnimationFrame(tick);
   }
-
   requestAnimationFrame(tick);
 }
 
-// ── Data helpers ───────────────────────────────────────────────────────────
+// ── Permission definitions ─────────────────────────────────────────────────
+// Each entry maps a chrome.contentSettings property name to a row element id.
 
-function deriveScore(answers) {
-  if (!answers?.length) return 0;
-  const points = { low: 100, medium: 50, high: 0 };
-  const total = answers.reduce((sum, a) => sum + (points[a.concern_level] ?? 50), 0);
-  return Math.round(total / answers.length);
-}
+const PERMISSIONS = [
+  { api: 'geolocation',        id: 'permGeolocation' },
+  { api: 'camera',             id: 'permCamera'       },
+  { api: 'microphone',         id: 'permMicrophone'   },
+  { api: 'notifications',      id: 'permNotifications'},
+  { api: 'popups',             id: 'permPopups'       },
+  { api: 'automaticDownloads', id: 'permDownloads'    },
+];
 
-// ── Fixed metric definitions ────────────────────────────────────────────────
-// Each metric scans the API's question list for keyword matches.
-// Rows are shown only when a matching answer is found; otherwise hidden.
-
-const METRICS = {
-  cookies:  ['cookie', 'cookies', 'non-essential', 'consent'],
-  trackers: ['track', 'tracker', 'analytics', 'fingerprint', 'behavioral', 'advertising'],
-  services: ['location', 'geolocation', 'microphone', 'camera', 'permission', 'sensor'],
-};
-
-const metricRows = {
-  cookies:  document.getElementById('metricCookies'),
-  trackers: document.getElementById('metricTrackers'),
-  services: document.getElementById('metricServices'),
-  account:  document.getElementById('metricAccount'),
-};
-
-function hasMatchForMetric(questions, keywords) {
-  if (!questions?.length) return false;
-  return questions.some(q => keywords.some(kw => q.toLowerCase().includes(kw)));
-}
-
-// ── State renderers ────────────────────────────────────────────────────────
-
-function setLoadingState() {
-  scoreNum.textContent = "—";
-  ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
-  Object.values(metricRows).forEach(row => { if (row) row.style.display = 'none'; });
-}
-
-function setErrorState() {
-  scoreNum.textContent = "—";
-  ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
-  Object.values(metricRows).forEach(row => { if (row) row.style.display = 'none'; });
-}
-
-// Called when the API fails — show all rows so the user can still restrict
-function setFallbackState() {
-  scoreNum.textContent = "—";
-  ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
-  if (metricRows.cookies)  metricRows.cookies.style.display  = '';
-  if (metricRows.trackers) metricRows.trackers.style.display = '';
-  if (metricRows.services) metricRows.services.style.display = '';
-  if (metricRows.account)  metricRows.account.style.display  = 'none';
-  if (breakdownEmpty) breakdownEmpty.style.display = 'none';
-}
-
-const breakdownEmpty = document.getElementById('breakdownEmpty');
-
-function renderData(response) {
-  animateScore(deriveScore(response.answers));
-
-  let anyVisible = false;
-  for (const [metric, keywords] of Object.entries(METRICS)) {
-    const row = metricRows[metric];
-    const visible = hasMatchForMetric(response.questions, keywords);
-    if (row) row.style.display = visible ? '' : 'none';
-    if (visible) anyVisible = true;
-  }
-  // account: always hidden until implemented
-  if (metricRows.account) metricRows.account.style.display = 'none';
-
-  if (breakdownEmpty) breakdownEmpty.style.display = anyVisible ? 'none' : '';
-}
-
-// ── Logo → landing page ────────────────────────────────────────────────────
+// ── Logo ───────────────────────────────────────────────────────────────────
 
 document.getElementById("ravenLogo").addEventListener("click", () => {
   chrome.tabs.create({ url: "https://example.com" }); // TODO: update with landing page URL
 });
 
-// ── Metric dismiss buttons ─────────────────────────────────────────────────
+// ── Footer: open Chrome's per-site content settings ────────────────────────
 
-document.querySelector('.breakdown').addEventListener('click', (e) => {
-  const btn = e.target.closest('.metric-dismiss');
-  if (!btn) return;
-
-  chrome.runtime.sendMessage({ type: 'RESTRICT_METRIC', payload: { metric: btn.dataset.metric } });
-
-  const row = btn.closest('.breakdown-row');
-  if (row) row.style.display = 'none';
-
-  const anyVisible = ['cookies', 'trackers', 'services'].some(
-    k => metricRows[k] && metricRows[k].style.display !== 'none'
-  );
-  if (breakdownEmpty) breakdownEmpty.style.display = anyVisible ? 'none' : '';
+document.querySelector('.footer-link').addEventListener('click', () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const url = tabs[0]?.url;
+    if (!url) return;
+    try {
+      const origin = encodeURIComponent(new URL(url).origin);
+      chrome.tabs.create({ url: `chrome://settings/content/siteDetails?site=${origin}` });
+    } catch {}
+  });
 });
 
-// ── Active tab domain + data fetch ─────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
 
-const siteDomain = document.getElementById("siteDomain");
-const siteSub = document.getElementById("siteSub");
-const faviconImg = document.getElementById("faviconImg");
-const viewFullReportBtn = document.querySelector(".footer-link");
+const breakdownEmpty = document.getElementById('breakdownEmpty');
 
-let cachedPolicyData = null;
+function updateEmpty() {
+  const anyVisible = [...document.querySelectorAll('.breakdown-row')]
+    .some(row => row.style.display !== 'none');
+  if (breakdownEmpty) breakdownEmpty.style.display = anyVisible ? 'none' : 'block';
+}
 
-setLoadingState();
+// ── Active tab + permission checks ─────────────────────────────────────────
+
+scoreNum.textContent = "—";
+ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-  const url = tabs[0]?.url;
-  if (!url) { setErrorState(); return; }
+  const tab = tabs[0];
+  if (!tab?.url) return;
 
   // Favicon
-  const favIconUrl = tabs[0]?.favIconUrl;
-  if (favIconUrl) {
-    faviconImg.src = favIconUrl;
-  }
+  if (tab.favIconUrl) document.getElementById("faviconImg").src = tab.favIconUrl;
 
-  let hostname;
+  let origin, hostname;
   try {
-    hostname = new URL(url).hostname.replace(/^www\./, "");
-    siteDomain.textContent = extractCompanyName(hostname);
+    const parsed = new URL(tab.url);
+    origin   = parsed.origin;                              // "https://www.google.com"
+    hostname = parsed.hostname.replace(/^www\./, '');      // "google.com"
+    document.getElementById("siteDomain").textContent = hostname;
   } catch {
-    setErrorState();
+    document.getElementById("siteDomain").textContent = "unknown";
     return;
   }
 
-  // Account status
-  getUserAccountForCompany(hostname)
-    .then(() => { if (siteSub) siteSub.textContent = 'Account already created'; })
-    .catch(() => { if (siteSub) siteSub.textContent = ''; });
+  // The pattern used for contentSettings.set() calls
+  const primaryPattern = origin + '/*';
 
-  chrome.runtime.sendMessage(
-    { type: "GET_POLICY_DATA", payload: { hostname } },
-    (response) => {
-      if (chrome.runtime.lastError || !response || response.error) {
-        setFallbackState();
-      } else {
-        cachedPolicyData = response;
-        renderData(response);
-      }
+  // ── Revoke / dismiss handler ─────────────────────────────────────────────
+
+  document.querySelector('.breakdown').addEventListener('click', (e) => {
+    const btn = e.target.closest('.metric-dismiss');
+    if (!btn) return;
+
+    const apiName = btn.dataset.perm;
+
+    if (apiName === 'cookies') {
+      // Delete all existing cookies for this domain, then block future ones
+      chrome.cookies.getAll({ domain: hostname }, (cookies) => {
+        for (const cookie of cookies) {
+          const cookieUrl = `http${cookie.secure ? 's' : ''}://${
+            cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain
+          }${cookie.path}`;
+          chrome.cookies.remove({ url: cookieUrl, name: cookie.name });
+        }
+      });
+      chrome.contentSettings.cookies.set({ primaryPattern, setting: 'block' });
+    } else {
+      const cs = chrome.contentSettings[apiName];
+      if (cs) cs.set({ primaryPattern, setting: 'block' });
     }
-  );
-});
 
-// ── View full report ───────────────────────────────────────────────────────
-// Sends the cached policy data to the active tab's content script,
-// which will inject the summary overlay directly into the page.
-
-viewFullReportBtn.addEventListener("click", () => {
-  if (!cachedPolicyData) return;
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const tabId = tabs[0]?.id;
-    if (!tabId) return;
-    chrome.tabs.sendMessage(tabId, {
-      type: "SHOW_POLICY_POPUP",
-      payload: cachedPolicyData,
-    });
+    const row = btn.closest('.breakdown-row');
+    if (row) row.style.display = 'none';
+    updateEmpty();
   });
+
+  // ── Cookie count ─────────────────────────────────────────────────────────
+
+  chrome.cookies.getAll({ domain: hostname }, (cookies) => {
+    const row = document.getElementById('permCookies');
+    const countEl = document.getElementById('cookieCount');
+    if (!row) return;
+    const count = cookies?.length ?? 0;
+    if (countEl) countEl.textContent = count;
+    row.style.display = count > 0 ? '' : 'none';
+    updateEmpty();
+  });
+
+  // ── contentSettings checks ───────────────────────────────────────────────
+
+  let checkedCount = 0;
+  let grantedCount = 0;
+
+  for (const perm of PERMISSIONS) {
+    const cs = chrome.contentSettings[perm.api];
+    const el = document.getElementById(perm.id);
+
+    if (!cs || !el) {
+      checkedCount++;
+      continue;
+    }
+
+    cs.get({ primaryUrl: tab.url }, (details) => {
+      checkedCount++;
+      const granted = details?.setting === 'allow';
+      el.style.display = granted ? '' : 'none';
+      if (granted) grantedCount++;
+
+      if (checkedCount === PERMISSIONS.length) {
+        // Score: 100 = nothing granted, 0 = everything granted
+        const score = Math.round((1 - grantedCount / PERMISSIONS.length) * 100);
+        animateScore(score);
+        updateEmpty();
+      }
+    });
+  }
 });
