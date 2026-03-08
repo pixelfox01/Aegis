@@ -105,6 +105,35 @@
 }
 
 /* ── SIDEBAR ── */
+.floating-sidebar-toggle {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 101;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 10px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: 'DM Mono', monospace;
+  transition: all 0.2s ease, opacity 0.6s ease, transform 0.6s ease;
+  opacity: 0;
+  transform: translateY(-8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.floating-sidebar-toggle.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.floating-sidebar-toggle:hover {
+  color: var(--ink);
+  background: var(--btn-hover-bg);
+}
+
 .docs-sidebar {
   width: 300px;
   background: var(--sidebar-bg);

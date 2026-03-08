@@ -43,6 +43,16 @@ function Docs() {
       <div className="grain" />
 
       <div className="docs-container">
+        {!sidebarOpen && (
+          <button 
+            className={`floating-sidebar-toggle ${visible ? 'visible' : ''}`}
+            onClick={() => setSidebarOpen(true)}
+            title="Open sidebar"
+          >
+            →
+          </button>
+        )}
+        
         <aside className={`docs-sidebar ${sidebarOpen ? 'open' : 'closed'} ${visible ? 'visible' : ''}`}>
           <div className="docs-sidebar-header">
             <h2>Documentation</h2>
