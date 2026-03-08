@@ -3,12 +3,12 @@ import {
     getApiUrl, setApiUrl,
     getSelfHosted, setSelfHosted
   } from '../utils/storage.js';
+  import { CONFIG } from '../config.js';
   
   // ── Constants ──────────────────────────────────────────────────────────────
   
-  // TODO: replace with your production dashboard URL
-  const DASHBOARD_URL = 'https://example.com';
-  const AUTH_CALLBACK_URL = `https://${chrome.runtime.id}.chromiumapp.org/`;
+  const AUTH_CALLBACK_URL = CONFIG.CALLBACK_URL;
+  const API_URL = CONFIG.API_URL;
   
   // ── Theme (mirrored from interface.js) ─────────────────────────────────────
   
