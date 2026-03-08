@@ -27,15 +27,22 @@ function deriveScore(answers) {
 
 async function getCachedOrFetch(hostname, policyType) {
     const cached = getCached(hostname);
-    if (cached) return cached;
+    if (cached) {
+        console.log('[Raven] Cache hit for', hostname);
+        return cached;
+    }
 
+    console.log('[Raven] Fetching summary for hostname:', hostname, '| policyType:', policyType);
     const raw = await getPolicySummary(hostname, policyType);
+    console.log('[Raven] Raw API response:', raw);
+
     const data = {
         site: hostname,
         score: deriveScore(raw.answers),
         questions: raw.questions,
         answers: raw.answers,
     };
+    console.log('[Raven] Processed data sent to UI:', data);
     summaryCache.set(hostname, { data, timestamp: Date.now() });
     return data;
 }
@@ -48,6 +55,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const tabId = sender.tab?.id;
         if (!tabId) return;
 
+        console.log('[Raven] POLICY_DETECTED — site:', site, '| policies:', policies, '| tabId:', tabId);
         getCachedOrFetch(site, policies[0])
             .then((data) => {
                 chrome.tabs.sendMessage(tabId, { type: 'SHOW_POLICY_POPUP', payload: data }, () => {
@@ -66,7 +74,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'GET_POLICY_DATA') {
         const { hostname } = message.payload;
 
-        getCachedOrFetch(hostname, 'privacy')
+        console.log('[Raven] GET_POLICY_DATA — hostname:', hostname);
+        getCachedOrFetch(hostname, 'pp')
             .then((data) => sendResponse(data))
             .catch(() => sendResponse({ error: true }));
 

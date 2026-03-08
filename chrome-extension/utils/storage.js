@@ -1,5 +1,5 @@
 const DEFAULTS = {
-    API_URL: 'http://www.oursite.com',
+    API_URL: 'http://localhost:8000',
     SELF_HOSTED: false,
     AUTH_TOKEN: null,
     COOKIE_PREFERENCES: {

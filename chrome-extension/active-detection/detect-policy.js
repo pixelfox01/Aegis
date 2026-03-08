@@ -10,8 +10,8 @@ const AGREEMENT_PATTERNS = [
 ];
 
 const POLICY_TYPES = [
-    { type: 'terms', patterns: ['terms of service', 'terms and conditions', 'terms & conditions'] },
-    { type: 'privacy', patterns: ['privacy policy', 'privacy notice'] },
+    { type: 'tos', patterns: ['terms of service', 'terms and conditions', 'terms & conditions'] },
+    { type: 'pp', patterns: ['privacy policy', 'privacy notice'] },
 ];
 
 function getTextNearElement(element) {

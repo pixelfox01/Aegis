@@ -22,18 +22,26 @@ async function request(path) {
         ? { 'X-API-Key': token }
         : { 'Authorization': `Bearer ${token}` };
 
-    const response = await fetch(`${baseUrl}${path}`, {
+    const fullUrl = `${baseUrl}${path}`;
+    console.log('[Raven] API request →', fullUrl);
+    console.log('[Raven] Auth mode:', isSelfHosted ? 'X-API-Key' : 'Bearer token', '| Token set:', token !== null);
+
+    const response = await fetch(fullUrl, {
         headers: {
             'Content-Type': 'application/json',
             ...authHeader
         }
     });
 
+    console.log('[Raven] API response status:', response.status, response.statusText);
+
     if (!response.ok) {
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    const json = await response.json();
+    console.log('[Raven] API response body:', json);
+    return json;
 }
 
 // ─── Endpoints ───────────────────────────────────────────────────────────────
