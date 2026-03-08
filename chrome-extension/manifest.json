@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Raven",
+  "version": "1.0.0",
+  "description": "Chrome Extension",
+
+  "permissions": [
+    "cookies",
+    "storage",
+    "tabs",
+    "activeTab",
+    "identity",
+    "webRequest",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "background": {
+    "service_worker": "background/index.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["active-detection/detect-policy.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "icons": {
+    "16": "icons/icon-dark.png",
+    "48": "icons/icon-dark.png",
+    "128": "icons/icon-dark.png"
+  },
+
+  "action": {
+    "default_popup": "popup-router.html",
+    "default_icon": {
+      "16": "icons/icon-dark.png",
+      "32": "icons/icon-dark.png",
+      "48": "icons/icon-dark.png"
+    }
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["summary-popup/policy-summary.css"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; connect-src 'self' http://localhost:8000 https://*.auth0.com https://*.chromiumapp.org; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; img-src 'self' data: https:"
+  }
+}

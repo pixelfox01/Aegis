@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="policy-summary.css" />
+  <title>Raven — TOS Summary (demo)</title>
+</head>
+
+<!--
+  This file is a standalone demo of the overlay that gets injected into pages.
+  The "background" content simulates the real page. The .raven-overlay is what
+  the content script will inject. All .raven-* classes are namespaced to avoid
+  collisions with host-page styles.
+-->
+
+<body class="demo-page theme-dark">
+
+  <!-- Simulated page content (visible through the frosted glass) -->
+  <div class="demo-bg" aria-hidden="true">
+    <div class="demo-blob demo-blob-1"></div>
+    <div class="demo-blob demo-blob-2"></div>
+    <div class="demo-page-content">
+      <div class="demo-line" style="width:55%"></div>
+      <div class="demo-line" style="width:80%"></div>
+      <div class="demo-line" style="width:65%"></div>
+      <div class="demo-line" style="width:72%"></div>
+      <div class="demo-line demo-line-short" style="width:40%"></div>
+      <div style="margin-top:28px;display:flex;gap:12px;">
+        <div class="demo-btn">Decline</div>
+        <div class="demo-btn demo-btn-primary">I agree to the Terms of Service</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Raven overlay (what gets injected) ── -->
+  <div class="raven-overlay" id="ravenOverlay">
+    <div class="raven-panel" id="ravenPanel">
+
+      <!-- Panel header -->
+      <div class="raven-header">
+        <div class="raven-header-left">
+          <span class="raven-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2C6 2 3 7 3 12c0 3 1.5 5.5 4 7l5-9 5 9c2.5-1.5 4-4 4-7 0-5-3-10-9-10z"/>
+            </svg>
+            Raven
+          </span>
+          <div class="raven-header-text">
+            <h2 class="raven-title">Before you agree —</h2>
+            <p class="raven-subtitle">Here's what <em>example.com</em>'s terms actually say.</p>
+          </div>
+        </div>
+        <div class="raven-header-right">
+          <button class="raven-theme-toggle" id="ravenThemeToggle" title="Toggle theme">
+            <span class="raven-toggle-icon raven-icon-sun">☀️</span>
+            <span class="raven-toggle-icon raven-icon-moon">🌙</span>
+            <span class="raven-toggle-knob"></span>
+          </button>
+          <button class="raven-close" id="ravenClose" title="Dismiss">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary items -->
+      <ul class="raven-items">
+        <li class="raven-item">
+          <span class="raven-dot raven-dot-bad"></span>
+          <div class="raven-item-body">
+            <span class="raven-item-label">Data sold to third parties</span>
+            <span class="raven-item-desc">Your personal data, browsing behaviour, and purchase history may be shared with advertising networks.</span>
+          </div>
+        </li>
+        <li class="raven-item">
+          <span class="raven-dot raven-dot-bad"></span>
+          <div class="raven-item-body">
+            <span class="raven-item-label">Broad data collection</span>
+            <span class="raven-item-desc">Collects device identifiers, IP address, location, and usage patterns even when not actively using the service.</span>
+          </div>
+        </li>
+        <li class="raven-item">
+          <span class="raven-dot raven-dot-warn"></span>
+          <div class="raven-item-body">
+            <span class="raven-item-label">Data retained for 36 months</span>
+            <span class="raven-item-desc">Account data persists for 3 years after deletion. Some logs are retained indefinitely for compliance purposes.</span>
+          </div>
+        </li>
+        <li class="raven-item">
+          <span class="raven-dot raven-dot-warn"></span>
+          <div class="raven-item-body">
+            <span class="raven-item-label">Terms can change without notice</span>
+            <span class="raven-item-desc">Continued use of the service after an update constitutes acceptance of the new terms.</span>
+          </div>
+        </li>
+        <li class="raven-item">
+          <span class="raven-dot raven-dot-ok"></span>
+          <div class="raven-item-body">
+            <span class="raven-item-label">Account deletion available</span>
+            <span class="raven-item-desc">You can request full account and data deletion through account settings. Processed within 30 days.</span>
+          </div>
+        </li>
+      </ul>
+
+      <!-- Footer actions -->
+      <div class="raven-footer">
+        <p class="raven-score-line">
+          Privacy score for this site: <strong id="ravenScore">0</strong><span class="raven-score-max">/100</span>
+        </p>
+        <div class="raven-actions">
+          <button class="raven-btn-ghost" id="ravenDismiss">Dismiss</button>
+          <button class="raven-btn-primary">Read full policy →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="policy-summary.js"></script>
+</body>
+</html>
