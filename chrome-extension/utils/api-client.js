@@ -59,8 +59,44 @@ export function getUserAccounts() {
     return request('/accounts');
 }
 
-// Returns whether the user has an existing account for a given company
-export function getUserAccountForCompany(hostname) {
+export function getUserPreferences() {
+    return request('/api/users/preferences');
+}
+
+const CONCERN_RANK = { low: 0, medium: 1, high: 2 };
+
+export function computeAlignment(policyAnswers, userPreferences) {
+    if (!policyAnswers?.length || !userPreferences) return null;
+
+    let matched = 0;
+    let compared = 0;
+
+    for (const answer of policyAnswers) {
+        const key = answer.question_key;
+        if (!key || !(key in userPreferences)) continue;
+
+        compared++;
+
+        const policyLevel = CONCERN_RANK[answer.concern_level] ?? 1;
+        const toleranceLevel = CONCERN_RANK[userPreferences[key]] ?? 1;
+
+        if (policyLevel <= toleranceLevel) {
+            // Policy meets or is better than the user's threshold
+            matched++;
+        }
+    }
+
+    if (compared === 0) return null;
+    return Math.round((matched / compared) * 100);
+}
+
+
+export function addUserAccount(hostname) {
     const company = extractCompanyName(hostname);
-    return request(`/accounts/${company}`);
+    return request('/api/accounts', {
+        method: 'PUT',
+        body: {
+            company,
+        }
+    });
 }
