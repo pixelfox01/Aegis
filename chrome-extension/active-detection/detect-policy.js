@@ -82,6 +82,15 @@ function notifyPipelineIfDetected() {
     });
 }
 
+// ── Overlay: helpers ──────────────────────────────────────────────────────────
+
+// Mirrors extractCompanyName from api-client.js (can't import in content scripts)
+function extractCompanyName(hostname) {
+    const parts = hostname.replace(/^www\./, '').split('.');
+    if (parts.includes('co')) return parts[parts.length - 3];
+    return parts[parts.length - 2];
+}
+
 // ── Overlay: CSS injection ────────────────────────────────────────────────────
 
 function injectRavenStyles() {
@@ -107,7 +116,10 @@ function buildItemsHTML(data) {
           <li class="raven-item">
             <span class="raven-dot raven-dot-warn"></span>
             <div class="raven-item-body">
-              <span class="raven-item-label">Summary unavailable</span>
+              <button class="raven-item-toggle" aria-expanded="false">
+                <span class="raven-item-label">Summary unavailable</span>
+                <span class="raven-chevron">▾</span>
+              </button>
               <span class="raven-item-desc">Raven could not retrieve data for this site.</span>
             </div>
           </li>`;
@@ -121,7 +133,10 @@ function buildItemsHTML(data) {
           <li class="raven-item">
             <span class="raven-dot ${dotClass}"></span>
             <div class="raven-item-body">
-              <span class="raven-item-label">${escapeHTML(question)}</span>
+              <button class="raven-item-toggle" aria-expanded="false">
+                <span class="raven-item-label">${escapeHTML(question)}</span>
+                <span class="raven-chevron">▾</span>
+              </button>
               <span class="raven-item-desc">${escapeHTML(desc)}</span>
             </div>
           </li>`;
@@ -137,7 +152,7 @@ function escapeHTML(str) {
 }
 
 function buildOverlayHTML(data) {
-    const site = escapeHTML(data.site || '');
+    const site = escapeHTML(extractCompanyName(data.site || ''));
     const scoreDisplay = data.error ? '—' : '0';
     const readBtnStyle = data.error ? ' style="display:none"' : '';
 
@@ -250,6 +265,15 @@ function showRavenOverlay(data) {
 
     wrapper.querySelector('#ravenClose')?.addEventListener('click', dismiss);
     wrapper.querySelector('#ravenDismiss')?.addEventListener('click', dismiss);
+
+    // Collapsible items
+    wrapper.querySelectorAll('.raven-item-toggle').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const item = btn.closest('.raven-item');
+            const expanded = item.classList.toggle('raven-item--open');
+            btn.setAttribute('aria-expanded', expanded);
+        });
+    });
 
     // Theme toggle
     wrapper.querySelector('#ravenThemeToggle')?.addEventListener('click', () => {

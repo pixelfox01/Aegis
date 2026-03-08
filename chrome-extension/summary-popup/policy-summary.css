@@ -344,13 +344,46 @@
   transition: color 0.4s ease;
 }
 
+.raven-item-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  text-align: left;
+}
+
+.raven-chevron {
+  font-size: 11px;
+  color: var(--r-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.4s ease;
+  line-height: 1;
+}
+
+.raven-item--open .raven-chevron {
+  transform: rotate(180deg);
+}
+
 .raven-item-desc {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   color: var(--r-muted);
   line-height: 1.65;
   letter-spacing: 0.01em;
-  transition: color 0.4s ease;
+  transition: max-height 0.3s ease, opacity 0.2s ease, color 0.4s ease;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+}
+
+.raven-item--open .raven-item-desc {
+  max-height: 200px;
+  opacity: 1;
 }
 
 /* ── Footer ── */

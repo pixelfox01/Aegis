@@ -1,4 +1,4 @@
-import { getPolicySummary } from '../utils/api-client.js';
+import { extractCompanyName } from '../utils/api-client.js';
 
 // ── Theme ──────────────────────────────────────────────────────────────────
 
@@ -113,6 +113,9 @@ function renderData(response) {
 // ── Active tab domain + data fetch ─────────────────────────────────────────
 
 const siteDomain = document.getElementById("siteDomain");
+const viewFullReportBtn = document.querySelector(".footer-link");
+
+let cachedPolicyData = null;
 
 setLoadingState();
 
@@ -123,7 +126,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   let hostname;
   try {
     hostname = new URL(url).hostname.replace(/^www\./, "");
-    siteDomain.textContent = hostname;
+    siteDomain.textContent = extractCompanyName(hostname);
   } catch {
     setErrorState();
     return;
@@ -135,8 +138,25 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (chrome.runtime.lastError || !response || response.error) {
         setErrorState();
       } else {
+        cachedPolicyData = response;
         renderData(response);
       }
     }
   );
+});
+
+// ── View full report ───────────────────────────────────────────────────────
+// Sends the cached policy data to the active tab's content script,
+// which will inject the summary overlay directly into the page.
+
+viewFullReportBtn.addEventListener("click", () => {
+  if (!cachedPolicyData) return;
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tabId = tabs[0]?.id;
+    if (!tabId) return;
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_POLICY_POPUP",
+      payload: cachedPolicyData,
+    });
+  });
 });

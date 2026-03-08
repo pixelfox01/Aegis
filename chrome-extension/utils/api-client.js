@@ -3,7 +3,7 @@ import { getApiUrl, getAuthToken, getSelfHosted } from './storage.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function extractCompanyName(hostname) {
+export function extractCompanyName(hostname) {
     const parts = hostname.replace(/^www\./, '').split('.');
     if (parts.includes("co")) {
         return parts[parts.length - 3];
