@@ -10,7 +10,9 @@ class Question(SQLModel, table=True):
 
 class Agreement(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    text: str = Field(unique=True, index=True)
+    company_name: str
+    agreement_type: str
+    agreement_filename: str = Field(index=True)
 
     summaries: list["Summary"] = Relationship(back_populates="agreement")
 
