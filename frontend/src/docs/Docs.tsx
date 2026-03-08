@@ -7,6 +7,7 @@ import Breadcrumbs from '../components/docs/Breadcrumbs'
 import TableOfContents from '../components/docs/TableOfContents'
 import Header from '../components/Header'
 import { useScrollDirection } from '../hooks/useScrollDirection'
+import { useTheme } from '../hooks/useTheme'
 import '../styles/docs.css'
 
 const docPages: Record<string, React.LazyExoticComponent<ComponentType>> = {
@@ -21,7 +22,7 @@ function Docs() {
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = searchParams.get('page') || 'getting-started/introduction'
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [dark, setDark] = useState(true)
+  const { dark, setDark } = useTheme()
   const [visible, setVisible] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')

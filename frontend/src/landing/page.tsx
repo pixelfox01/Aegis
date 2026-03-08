@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useScrollDirection } from "../hooks/useScrollDirection";
+import { useTheme } from "../hooks/useTheme";
 
 export default function LandingPage() {
 	const [visible, setVisible] = useState(false);
-	const [dark, setDark] = useState(true);
+	const { dark, setDark } = useTheme();
 	const { loginWithRedirect, isLoading } = useAuth0();
 	const { scrollDirection, isTop } = useScrollDirection();
 
