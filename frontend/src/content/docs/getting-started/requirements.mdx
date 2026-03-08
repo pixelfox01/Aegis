@@ -1,0 +1,93 @@
+---
+title: "System Requirements"
+description: "Hardware, software, and network requirements for running Aegis on your infrastructure"
+---
+
+# System Requirements
+
+Before installing Aegis, ensure your system meets the following requirements.
+
+## Hardware Requirements
+
+### Minimum Specifications
+- **CPU**: 2 cores
+- **RAM**: 4GB
+- **Storage**: 10GB free space
+
+### Recommended Specifications
+- **CPU**: 4+ cores
+- **RAM**: 8GB or more
+- **Storage**: 20GB+ free space (for logs and data)
+
+## Software Requirements
+
+### Docker & Docker Compose
+
+Aegis uses Docker for containerization, making deployment simple and consistent.
+
+<Steps>
+  <Step title="Install Docker">
+    Visit [docker.com](https://docker.com) and install Docker Desktop for your operating system, or use your package manager:
+
+    ```bash
+    # Ubuntu/Debian
+    curl -fsSL https://get.docker.com | sh
+
+    # macOS (using Homebrew)
+    brew install --cask docker
+    ```
+  </Step>
+
+  <Step title="Verify Installation">
+    Check that Docker is installed correctly:
+
+    ```bash
+    docker --version
+    docker compose version
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+Docker Desktop requires WSL2 on Windows. Make sure to enable virtualization in your BIOS.
+</Warning>
+
+### Required Versions
+
+| Software | Minimum Version |
+|----------|----------------|
+| Docker | 24.0+ |
+| Docker Compose | 2.20+ |
+| Git | 2.0+ |
+
+## Operating Systems
+
+Aegis can run on:
+
+- **Linux** (recommended) - Ubuntu 22.04+, Debian 11+, Fedora 38+
+- **macOS** - macOS 12 (Monterey) or later
+- **Windows** - Windows 10/11 with WSL2
+
+<Tip>
+We recommend running Aegis on Linux for production deployments for better performance and resource management.
+</Tip>
+
+## Network Requirements
+
+### Ports
+
+The following ports need to be available:
+
+- **3000** - Frontend web application
+- **8000** - Backend API server
+- **5432** - PostgreSQL database (internal, can be customized)
+
+<Info>
+All ports can be customized in your docker-compose.yml configuration.
+</Info>
+
+### Firewall
+
+Ensure your firewall allows:
+- Incoming connections on ports 3000 and 8000
+- Outbound connections for package downloads during setup

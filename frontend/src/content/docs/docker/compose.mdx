@@ -1,0 +1,203 @@
+---
+title: "Docker Compose Configuration"
+description: "Configure and customize your Aegis deployment with Docker Compose for production and development"
+---
+
+# Docker Compose Configuration
+
+Learn how to configure and customize your Aegis deployment using Docker Compose.
+
+## Default Configuration
+
+Aegis provides a default `docker-compose.yml` that works out of the box:
+
+```yaml
+version: '3.8'
+
+services:
+  frontend:
+    image: aegis/frontend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_AUTH0_DOMAIN=${AUTH0_DOMAIN}
+      - VITE_AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
+    depends_on:
+      - backend
+
+  backend:
+    image: aegis/backend:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://aegis:${DB_PASSWORD}@db:5432/aegis
+      - SECRET_KEY=${SECRET_KEY}
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN}
+      - AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=aegis
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=aegis
+
+volumes:
+  pgdata:
+```
+
+## Service Overview
+
+### Frontend Service
+
+The React web application served via Nginx.
+
+**Key configurations:**
+- Port `3000` exposed to host
+- Environment variables for API URL and Auth0
+- Depends on backend service
+
+### Backend Service
+
+FastAPI server handling API requests.
+
+**Key configurations:**
+- Port `8000` exposed to host
+- Database connection via `DATABASE_URL`
+- Auth0 integration for authentication
+
+### Database Service
+
+PostgreSQL 16 for data persistence.
+
+**Key configurations:**
+- Data stored in `pgdata` volume
+- Credentials from environment variables
+- Internal port 5432 (not exposed to host)
+
+## Customization
+
+### Change Ports
+
+To use different ports:
+
+```yaml
+services:
+  frontend:
+    ports:
+      - "8080:3000"  # Access on port 8080
+  
+  backend:
+    ports:
+      - "9000:8000"  # Access on port 9000
+```
+
+<Warning>
+If you change the backend port, update `VITE_API_URL` in the frontend service accordingly.
+</Warning>
+
+### Add Redis for Caching
+
+Add Redis for session management and caching:
+
+```yaml
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  backend:
+    environment:
+      - REDIS_URL=redis://redis:6379
+
+volumes:
+  redis_data:
+```
+
+### Configure Resource Limits
+
+Prevent services from consuming too many resources:
+
+```yaml
+services:
+  backend:
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+```
+
+## Production Considerations
+
+<AccordionGroup>
+  <Accordion title="Use specific version tags">
+    Instead of `latest`, pin specific versions:
+    
+    ```yaml
+    frontend:
+      image: aegis/frontend:v1.2.3
+    backend:
+      image: aegis/backend:v1.2.3
+    ```
+  </Accordion>
+
+  <Accordion title="Set restart policies">
+    Ensure services restart on failure:
+    
+    ```yaml
+    services:
+      backend:
+        restart: unless-stopped
+    ```
+  </Accordion>
+
+  <Accordion title="Use secrets for sensitive data">
+    Use Docker secrets instead of environment variables:
+    
+    ```yaml
+    services:
+      backend:
+        secrets:
+          - db_password
+          - secret_key
+
+    secrets:
+      db_password:
+        file: ./secrets/db_password.txt
+      secret_key:
+        file: ./secrets/secret_key.txt
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Health Checks
+
+Add health checks to monitor service status:
+
+```yaml
+services:
+  backend:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
+
+<Info>
+Health checks help Docker Compose determine when services are ready to accept traffic.
+</Info>
