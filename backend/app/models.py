@@ -1,6 +1,13 @@
 from sqlmodel import Field, SQLModel, Relationship
 
 
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    username: str = Field(unique=True, index=True)
+    password_hash: str
+    is_admin: bool = True
+
+
 class Question(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     text: str = Field(unique=True, index=True)

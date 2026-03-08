@@ -8,7 +8,7 @@ from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
-router = APIRouter(prefix="/agreements", tags=["agreements"])
+router = APIRouter(prefix="/api/agreements", tags=["agreements"])
 
 
 class SummarizeRequest(BaseModel):
