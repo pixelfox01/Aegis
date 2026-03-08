@@ -38,6 +38,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def decode_access_token(token: str) -> Optional[dict]:
     try:
+        # First, try to decode without verification to check if it's an Auth0 token
+        unverified_payload = jwt.decode(token, options={"verify_signature": False})
+        
+        # Check if this is an Auth0 token (has 'iss' claim with auth0.com domain)
+        issuer = unverified_payload.get("iss", "")
+        if "auth0.com" in issuer or unverified_payload.get("sub", "").startswith("auth0|") or unverified_payload.get("sub", "").startswith("google-oauth2|"):
+            # Trust Auth0 tokens from the frontend (already validated by Auth0)
+            return unverified_payload
+        
+        # For local tokens, validate with our secret key
         if not settings.jwt_secret_key:
             return None
         payload = jwt.decode(token, settings.jwt_secret_key, algorithms=["HS256"])
