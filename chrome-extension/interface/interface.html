@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="interface.css" />
+</head>
+<body class="theme-dark">
+
+  <!-- Background layers -->
+  <div class="grain"></div>
+  <div class="orb"></div>
+
+  <!-- Nav -->
+  <header class="nav">
+    <button class="logo" id="ravenLogo" title="Visit Raven">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2C6 2 3 7 3 12c0 3 1.5 5.5 4 7l5-9 5 9c2.5-1.5 4-4 4-7 0-5-3-10-9-10z"/>
+      </svg>
+      Raven
+    </button>
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <span class="toggle-icon icon-sun">☀️</span>
+      <span class="toggle-icon icon-moon">🌙</span>
+      <span class="toggle-knob"></span>
+    </button>
+  </header>
+
+  <!-- Site row: domain + score ring -->
+  <div class="site-row">
+    <div class="site-info">
+      <div class="favicon-wrap">
+        <img class="favicon-img" id="faviconImg" alt="" />
+      </div>
+      <div class="site-meta">
+        <span class="site-domain" id="siteDomain">example.com</span>
+        <span class="site-sub" id="siteSub"></span>
+      </div>
+    </div>
+
+    <div class="score-col">
+    <span class="score-eyebrow">Values alignment</span>
+    <div class="score-wrap">
+      <svg class="score-svg" viewBox="0 0 64 64" id="scoreRing">
+        <circle class="ring-track" cx="32" cy="32" r="26" />
+        <circle class="ring-fill" id="ringFill" cx="32" cy="32" r="26"
+          stroke-dasharray="163.36"
+          stroke-dashoffset="163.36" />
+      </svg>
+      <div class="score-center">
+        <div class="score-readout">
+          <span class="score-num" id="scoreNum">—</span><span class="score-pct" id="scorePct">%</span>
+        </div>
+      </div>
+    </div>
+    </div><!-- /.score-col -->
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Breakdown -->
+  <section class="breakdown">
+    <p class="section-eyebrow">Currently Sharing</p>
+
+    <div class="breakdown-row" id="metricCookies">
+      <span class="dim-label">Unnecessary cookies</span>
+      <button class="metric-dismiss" data-metric="cookies" title="Restrict">✕</button>
+    </div>
+
+    <div class="breakdown-row" id="metricTrackers">
+      <span class="dim-label">Trackers</span>
+      <button class="metric-dismiss" data-metric="trackers" title="Restrict">✕</button>
+    </div>
+
+    <div class="breakdown-row" id="metricServices">
+      <span class="dim-label">Browser permissions</span>
+      <button class="metric-dismiss" data-metric="services" title="Restrict">✕</button>
+    </div>
+
+    <div class="breakdown-row" id="metricAccount">
+      <span class="dim-label">Existing account</span>
+    </div>
+
+    <p class="breakdown-empty" id="breakdownEmpty">
+      This website isn't requesting anything beyond what's necessary.
+    </p>
+  </section>
+
+  <!-- Footer -->
+  <footer class="popup-footer">
+    <button class="footer-link">
+      View full report <span class="arrow">→</span>
+    </button>
+  </footer>
+
+  <script type="module" src="interface.js"></script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+import { extractCompanyName, getUserAccountForCompany } from '../utils/api-client.js';
+
+// ── Theme ──────────────────────────────────────────────────────────────────
+
+const body = document.body;
+const themeToggle = document.getElementById("themeToggle");
+
+let dark = true;
+
+chrome.storage.local.get(["ravenTheme"], (result) => {
+  dark = result.ravenTheme !== "light";
+  applyTheme();
+});
+
+function applyTheme() {
+  body.className = dark ? "theme-dark" : "theme-light";
+}
+
+themeToggle.addEventListener("click", () => {
+  dark = !dark;
+  applyTheme();
+  chrome.storage.local.set({ ravenTheme: dark ? "dark" : "light" });
+});
+
+// ── Score ring ─────────────────────────────────────────────────────────────
+
+const RADIUS = 26;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS; // 163.36
+
+const ringFill = document.getElementById("ringFill");
+const scoreNum = document.getElementById("scoreNum");
+
+function animateScore(targetScore) {
+  const duration = 1000;
+  const start = performance.now();
+
+  function tick(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const current = Math.round(eased * targetScore);
+
+    scoreNum.textContent = current;
+    ringFill.setAttribute(
+      "stroke-dashoffset",
+      CIRCUMFERENCE - (current / 100) * CIRCUMFERENCE
+    );
+
+    if (t < 1) requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
+}
+
+// ── Data helpers ───────────────────────────────────────────────────────────
+
+function deriveScore(answers) {
+  if (!answers?.length) return 0;
+  const points = { low: 100, medium: 50, high: 0 };
+  const total = answers.reduce((sum, a) => sum + (points[a.concern_level] ?? 50), 0);
+  return Math.round(total / answers.length);
+}
+
+// ── Fixed metric definitions ────────────────────────────────────────────────
+// Each metric scans the API's question list for keyword matches.
+// Rows are shown only when a matching answer is found; otherwise hidden.
+
+const METRICS = {
+  cookies:  ['cookie', 'cookies', 'non-essential', 'consent'],
+  trackers: ['track', 'tracker', 'analytics', 'fingerprint', 'behavioral', 'advertising'],
+  services: ['location', 'geolocation', 'microphone', 'camera', 'permission', 'sensor'],
+};
+
+const metricRows = {
+  cookies:  document.getElementById('metricCookies'),
+  trackers: document.getElementById('metricTrackers'),
+  services: document.getElementById('metricServices'),
+  account:  document.getElementById('metricAccount'),
+};
+
+function hasMatchForMetric(questions, keywords) {
+  if (!questions?.length) return false;
+  return questions.some(q => keywords.some(kw => q.toLowerCase().includes(kw)));
+}
+
+// ── State renderers ────────────────────────────────────────────────────────
+
+function setLoadingState() {
+  scoreNum.textContent = "—";
+  ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
+  Object.values(metricRows).forEach(row => { if (row) row.style.display = 'none'; });
+}
+
+function setErrorState() {
+  scoreNum.textContent = "—";
+  ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
+  Object.values(metricRows).forEach(row => { if (row) row.style.display = 'none'; });
+}
+
+// Called when the API fails — show all rows so the user can still restrict
+function setFallbackState() {
+  scoreNum.textContent = "—";
+  ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
+  if (metricRows.cookies)  metricRows.cookies.style.display  = '';
+  if (metricRows.trackers) metricRows.trackers.style.display = '';
+  if (metricRows.services) metricRows.services.style.display = '';
+  if (metricRows.account)  metricRows.account.style.display  = 'none';
+  if (breakdownEmpty) breakdownEmpty.style.display = 'none';
+}
+
+const breakdownEmpty = document.getElementById('breakdownEmpty');
+
+function renderData(response) {
+  animateScore(deriveScore(response.answers));
+
+  let anyVisible = false;
+  for (const [metric, keywords] of Object.entries(METRICS)) {
+    const row = metricRows[metric];
+    const visible = hasMatchForMetric(response.questions, keywords);
+    if (row) row.style.display = visible ? '' : 'none';
+    if (visible) anyVisible = true;
+  }
+  // account: always hidden until implemented
+  if (metricRows.account) metricRows.account.style.display = 'none';
+
+  if (breakdownEmpty) breakdownEmpty.style.display = anyVisible ? 'none' : '';
+}
+
+// ── Logo → landing page ────────────────────────────────────────────────────
+
+document.getElementById("ravenLogo").addEventListener("click", () => {
+  chrome.tabs.create({ url: "https://example.com" }); // TODO: update with landing page URL
+});
+
+// ── Metric dismiss buttons ─────────────────────────────────────────────────
+
+document.querySelector('.breakdown').addEventListener('click', (e) => {
+  const btn = e.target.closest('.metric-dismiss');
+  if (!btn) return;
+
+  chrome.runtime.sendMessage({ type: 'RESTRICT_METRIC', payload: { metric: btn.dataset.metric } });
+
+  const row = btn.closest('.breakdown-row');
+  if (row) row.style.display = 'none';
+
+  const anyVisible = ['cookies', 'trackers', 'services'].some(
+    k => metricRows[k] && metricRows[k].style.display !== 'none'
+  );
+  if (breakdownEmpty) breakdownEmpty.style.display = anyVisible ? 'none' : '';
+});
+
+// ── Active tab domain + data fetch ─────────────────────────────────────────
+
+const siteDomain = document.getElementById("siteDomain");
+const siteSub = document.getElementById("siteSub");
+const faviconImg = document.getElementById("faviconImg");
+const viewFullReportBtn = document.querySelector(".footer-link");
+
+let cachedPolicyData = null;
+
+setLoadingState();
+
+chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  const url = tabs[0]?.url;
+  if (!url) { setErrorState(); return; }
+
+  // Favicon
+  const favIconUrl = tabs[0]?.favIconUrl;
+  if (favIconUrl) {
+    faviconImg.src = favIconUrl;
+  }
+
+  let hostname;
+  try {
+    hostname = new URL(url).hostname.replace(/^www\./, "");
+    siteDomain.textContent = extractCompanyName(hostname);
+  } catch {
+    setErrorState();
+    return;
+  }
+
+  // Account status
+  getUserAccountForCompany(hostname)
+    .then(() => { if (siteSub) siteSub.textContent = 'Account already created'; })
+    .catch(() => { if (siteSub) siteSub.textContent = ''; });
+
+  chrome.runtime.sendMessage(
+    { type: "GET_POLICY_DATA", payload: { hostname } },
+    (response) => {
+      if (chrome.runtime.lastError || !response || response.error) {
+        setFallbackState();
+      } else {
+        cachedPolicyData = response;
+        renderData(response);
+      }
+    }
+  );
+});
+
+// ── View full report ───────────────────────────────────────────────────────
+// Sends the cached policy data to the active tab's content script,
+// which will inject the summary overlay directly into the page.
+
+viewFullReportBtn.addEventListener("click", () => {
+  if (!cachedPolicyData) return;
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tabId = tabs[0]?.id;
+    if (!tabId) return;
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_POLICY_POPUP",
+      payload: cachedPolicyData,
+    });
+  });
+});
