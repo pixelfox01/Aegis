@@ -3,7 +3,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import LandingPage from "./landing/page";
 import OnboardingSurvey from "./onboarding/OnboardingSurvey";
 import Dashboard from "./dashboard/Dashboard";
-import Docs from './pages/Docs'
+import Docs from './docs/Docs'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
 	const { isAuthenticated, isLoading } = useAuth0();

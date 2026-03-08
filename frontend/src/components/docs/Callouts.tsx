@@ -39,3 +39,12 @@ export function Note({ children }: CalloutProps) {
     </div>
   )
 }
+
+export function Check({ children }: CalloutProps) {
+  return (
+    <div className="callout callout-check">
+      <span className="callout-icon">✓</span>
+      <div className="callout-content">{children}</div>
+    </div>
+  )
+}

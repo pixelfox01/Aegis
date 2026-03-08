@@ -393,7 +393,7 @@ export default function LandingPage() {
 						</a>
 						<div className="nav-links">
 							<a href="#" className="nav-btn">How it works</a>
-							<a href="#" className="nav-btn">Docs</a>
+							<a href="#" onClick={() => { window.location.href = '/docs' }} className="nav-btn">Docs</a>
 							<button
 								className="nav-btn primary"
 								onClick={handleSignUp}
