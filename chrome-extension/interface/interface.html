@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="interface.css" />
+</head>
+<body class="theme-dark">
+
+  <!-- Background layers -->
+  <div class="grain"></div>
+  <div class="orb"></div>
+
+  <!-- Nav -->
+  <header class="nav">
+    <span class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2C6 2 3 7 3 12c0 3 1.5 5.5 4 7l5-9 5 9c2.5-1.5 4-4 4-7 0-5-3-10-9-10z"/>
+      </svg>
+      Raven
+    </span>
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <span class="toggle-icon icon-sun">☀️</span>
+      <span class="toggle-icon icon-moon">🌙</span>
+      <span class="toggle-knob"></span>
+    </button>
+  </header>
+
+  <!-- Site row: domain + score ring -->
+  <div class="site-row">
+    <div class="site-info">
+      <div class="favicon-wrap">
+        <div class="favicon-placeholder"></div>
+      </div>
+      <div class="site-meta">
+        <span class="site-domain" id="siteDomain">example.com</span>
+        <span class="site-sub">Active tab</span>
+      </div>
+    </div>
+
+    <div class="score-wrap">
+      <svg class="score-svg" viewBox="0 0 64 64" id="scoreRing">
+        <circle class="ring-track" cx="32" cy="32" r="26" />
+        <circle class="ring-fill" id="ringFill" cx="32" cy="32" r="26"
+          stroke-dasharray="163.36"
+          stroke-dashoffset="163.36" />
+      </svg>
+      <div class="score-center">
+        <span class="score-num" id="scoreNum">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Breakdown -->
+  <section class="breakdown">
+    <p class="section-eyebrow">Privacy breakdown</p>
+
+    <div class="breakdown-row">
+      <span class="dim-label">Data collection</span>
+      <div class="dim-right">
+        <span class="dot dot-bad"></span>
+        <span class="dim-text">Extensive — incl. device IDs</span>
+      </div>
+    </div>
+
+    <div class="breakdown-row">
+      <span class="dim-label">Third-party sharing</span>
+      <div class="dim-right">
+        <span class="dot dot-bad"></span>
+        <span class="dim-text">Sold to ad partners</span>
+      </div>
+    </div>
+
+    <div class="breakdown-row">
+      <span class="dim-label">Data retention</span>
+      <div class="dim-right">
+        <span class="dot dot-warn"></span>
+        <span class="dim-text">Retained for 36 months</span>
+      </div>
+    </div>
+
+    <div class="breakdown-row">
+      <span class="dim-label">Tracking & cookies</span>
+      <div class="dim-right">
+        <span class="dot dot-bad"></span>
+        <span class="dim-text">Cross-site tracking active</span>
+      </div>
+    </div>
+
+    <div class="breakdown-row">
+      <span class="dim-label">Account deletion</span>
+      <div class="dim-right">
+        <span class="dot dot-ok"></span>
+        <span class="dim-text">Self-serve, 30-day purge</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="popup-footer">
+    <button class="footer-link">
+      View full report <span class="arrow">→</span>
+    </button>
+    <button class="footer-icon" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </footer>
+
+  <script src="interface.js"></script>
+</body>
+</html>
