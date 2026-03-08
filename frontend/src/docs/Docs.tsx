@@ -21,6 +21,8 @@ function Docs() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [dark, setDark] = useState(true)
   const [visible, setVisible] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const PageComponent = docPages[currentPage] || docPages['getting-started/introduction']
 
@@ -32,6 +34,33 @@ function Docs() {
     const t = setTimeout(() => setVisible(true), 100)
     return () => clearTimeout(t)
   }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+      if (e.key === 'Escape' && searchOpen) {
+        setSearchOpen(false)
+        setSearchQuery('')
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [searchOpen])
+
+  const allPages = docsConfig.flatMap(section => 
+    section.pages.map(page => ({ ...page, section: section.title }))
+  )
+
+  const filteredPages = searchQuery
+    ? allPages.filter(page =>
+        page.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        page.path.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : allPages
 
   return (
     <div className={`docs-root ${dark ? 'theme-dark' : 'theme-light'}`}>
@@ -77,11 +106,17 @@ function Docs() {
           </div>
           
           <div className="docs-search">
-            <input
-              type="text"
-              placeholder="Search documentation..."
-              className="search-input"
-            />
+            <button
+              className="search-trigger"
+              onClick={() => setSearchOpen(true)}
+            >
+              <span className="search-icon">🔍</span>
+              <span className="search-placeholder">Search documentation...</span>
+              <kbd className="search-kbd">
+                <span className="kbd-key">⌘</span>
+                <span className="kbd-key">K</span>
+              </kbd>
+            </button>
           </div>
           
           <nav className="docs-nav">
@@ -120,6 +155,53 @@ function Docs() {
           <TableOfContents />
         </aside>
       </div>
+
+      {searchOpen && (
+        <>
+          <div className="search-overlay" onClick={() => { setSearchOpen(false); setSearchQuery(''); }} />
+          <div className="search-modal">
+            <div className="search-modal-header">
+              <span className="search-icon">🔍</span>
+              <input
+                type="text"
+                className="search-modal-input"
+                placeholder="Search documentation..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+              <button className="search-close" onClick={() => { setSearchOpen(false); setSearchQuery(''); }}>
+                esc
+              </button>
+            </div>
+            <div className="search-results">
+              {filteredPages.length > 0 ? (
+                filteredPages.map((page) => (
+                  <button
+                    key={page.path}
+                    className="search-result-item"
+                    onClick={() => {
+                      navigateToPage(page.path)
+                      setSearchOpen(false)
+                      setSearchQuery('')
+                    }}
+                  >
+                    <div className="search-result-content">
+                      <div className="search-result-title">{page.title}</div>
+                      <div className="search-result-breadcrumb">{page.section} / {page.title}</div>
+                    </div>
+                    <span className="search-result-arrow">→</span>
+                  </button>
+                ))
+              ) : (
+                <div className="search-no-results">
+                  No results found for "{searchQuery}"
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
