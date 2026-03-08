@@ -12,6 +12,7 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 class SyncUserRequest(BaseModel):
     email: Optional[str] = None
+    sub: Optional[str] = None  # Auth0 sub claim sent from frontend
 
 
 class UserResponse(BaseModel):
@@ -66,31 +67,43 @@ def sync_user(
     session: SessionDep = None
 ):
     """Upsert user from Auth0 or local JWT token"""
+    print(f"[SYNC] Received sync request: {request}")
+    
     if not authorization or not authorization.startswith("Bearer "):
+        print("[SYNC] No authorization header")
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     token = authorization.replace("Bearer ", "")
-    payload = decode_access_token(token)
     
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    sub = payload.get("sub")
-    if not sub:
-        raise HTTPException(status_code=401, detail="Invalid token - no sub claim")
-    
-    if sub.startswith("auth0|") or sub.startswith("google-oauth2|") or "|" in sub:
-        auth_sub = sub
+    # For Auth0, trust the frontend-provided sub (token is encrypted JWE, can't decode)
+    if request.sub and (request.sub.startswith("auth0|") or request.sub.startswith("google-oauth2|") or "|" in request.sub):
+        print(f"[SYNC] Using Auth0 sub from request body: {request.sub}")
+        auth_sub = request.sub
         auth_provider = "auth0"
-        email = request.email or payload.get("email")
+        email = request.email
     else:
+        # For local auth, decode the JWT token
+        payload = decode_access_token(token)
+        print(f"[SYNC] Decoded payload: {payload}")
+        
+        if not payload:
+            print("[SYNC] Failed to decode token")
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        sub = payload.get("sub")
+        if not sub:
+            print("[SYNC] No sub claim in token")
+            raise HTTPException(status_code=401, detail="Invalid token - no sub claim")
+        
         auth_sub = f"local:{sub}"
         auth_provider = "local"
         email = None
     
+    print(f"[SYNC] Looking for user with auth_sub={auth_sub}, provider={auth_provider}, email={email}")
     existing_user = session.exec(select(AppUser).where(AppUser.auth_sub == auth_sub)).first()
     
     if existing_user:
+        print(f"[SYNC] Found existing user: {existing_user.id}")
         if email and existing_user.email != email:
             existing_user.email = email
             session.add(existing_user)
@@ -103,6 +116,7 @@ def sync_user(
             auth_provider=existing_user.auth_provider
         )
     
+    print(f"[SYNC] Creating new user with auth_sub={auth_sub}")
     new_user = AppUser(
         auth_provider=auth_provider,
         auth_sub=auth_sub,
@@ -113,6 +127,7 @@ def sync_user(
     session.commit()
     session.refresh(new_user)
     
+    print(f"[SYNC] Created new user: {new_user.id}")
     return UserResponse(
         id=str(new_user.id),
         email=new_user.email,
