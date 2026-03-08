@@ -62,129 +62,58 @@ import {
     step.style.animation = '';
   }
   
+  // ── Check if auth completed while popup was closed ───────────────────────
+  // This handles the case where user completes OAuth but popup closed during flow
+  
+  chrome.storage.sync.get(['AUTH_TOKEN', 'ONBOARDED'], (result) => {
+    if (result.AUTH_TOKEN && result.ONBOARDED) {
+      console.log('[Raven] Already authenticated, showing success');
+      showStep(stepSuccess);
+      setTimeout(() => {
+        window.location.replace('../interface/interface.html');
+      }, 800);
+    }
+  });
+  
   // ── Connect via Auth0 (Direct OAuth flow) ─────────────────────────────────
   // Opens Auth0 login directly using chrome.identity.launchWebAuthFlow
   // After authentication, Auth0 redirects to the extension's callback URL
   // with access_token in the URL hash
   
   btnConnect.addEventListener('click', async () => {
-    console.log('[Raven] Connect button clicked');
-    console.log('[Raven] Extension ID:', chrome.runtime.id);
-    console.log('[Raven] Callback URL:', AUTH_CALLBACK_URL);
-    console.log('[Raven] chrome.identity available?', !!chrome.identity);
-    console.log('[Raven] chrome.identity.launchWebAuthFlow available?', !!chrome.identity?.launchWebAuthFlow);
+    console.log('[Raven] Connect button clicked - delegating to background');
     
-    if (!chrome.identity?.launchWebAuthFlow) {
-      console.error('[Raven] chrome.identity.launchWebAuthFlow not available - falling back to manual entry');
-      showStep(stepToken);
-      return;
-    }
-  
-    // Construct Auth0 authorize URL with implicit flow
-    const auth0Params = new URLSearchParams({
-      client_id: CONFIG.AUTH0_CLIENT_ID,
-      response_type: 'token id_token',
-      redirect_uri: AUTH_CALLBACK_URL,
-      scope: 'openid profile email',
-      prompt: 'login',
-      nonce: Math.random().toString(36).substring(2)
-    });
-    
-    const loginUrl = `https://${CONFIG.AUTH0_DOMAIN}/authorize?${auth0Params.toString()}`;
-    console.log('[Raven] Opening Auth0 login:', loginUrl);
-    
-    // Show loading state on button
+    // Show loading state
     btnConnect.classList.add('is-loading');
     btnConnect.disabled = true;
-  
-    try {
-      chrome.identity.launchWebAuthFlow(
-        { url: loginUrl, interactive: true },
-        async (redirectUrl) => {
-          console.log('[Raven] Auth flow callback received');
-          console.log('[Raven] Redirect URL:', redirectUrl);
-          
-          // Reset button state
-          btnConnect.classList.remove('is-loading');
-          btnConnect.disabled = false;
-          
-          if (chrome.runtime.lastError) {
-            console.error('[Raven] Auth flow error:', chrome.runtime.lastError.message);
-            // User closed the window or flow failed
-            if (chrome.runtime.lastError.message.includes('canceled') || 
-                chrome.runtime.lastError.message.includes('closed')) {
-              console.log('[Raven] User canceled auth flow');
-              return; // Stay on welcome screen
-            }
-            showStep(stepToken);
-            return;
-          }
-          
-          if (!redirectUrl) {
-            console.error('[Raven] No redirect URL received');
-            showStep(stepToken);
-            return;
-          }
     
-          try {
-            console.log('[Raven] Parsing redirect URL...');
-            
-            // Auth0 returns token in URL hash (#access_token=...)
-            const hashIndex = redirectUrl.indexOf('#');
-            if (hashIndex === -1) {
-              console.error('[Raven] No hash fragment in redirect URL');
-              console.log('[Raven] Full URL:', redirectUrl);
-              // Check for error in query params
-              const urlObj = new URL(redirectUrl);
-              const error = urlObj.searchParams.get('error');
-              const errorDesc = urlObj.searchParams.get('error_description');
-              if (error) {
-                console.error('[Raven] Auth0 error:', error, errorDesc);
-              }
-              showStep(stepToken);
-              return;
-            }
-            
-            const hashFragment = redirectUrl.substring(hashIndex + 1);
-            console.log('[Raven] Hash fragment:', hashFragment.substring(0, 50) + '...');
-            
-            const hashParams = new URLSearchParams(hashFragment);
-            const token = hashParams.get('access_token');
-            const idToken = hashParams.get('id_token');
-            const error = hashParams.get('error');
-            const errorDesc = hashParams.get('error_description');
-            
-            if (error) {
-              console.error('[Raven] Auth0 returned error:', error, errorDesc);
-              showStep(stepToken);
-              return;
-            }
-            
-            console.log('[Raven] access_token present:', !!token);
-            console.log('[Raven] id_token present:', !!idToken);
-            
-            if (token) {
-              console.log('[Raven] Token received, saving...');
-              await setApiUrl(API_URL);
-              await setSelfHosted(false);
-              await saveAndFinish(token);
-            } else {
-              console.error('[Raven] No access_token in redirect URL');
-              console.log('[Raven] Available params:', Array.from(hashParams.keys()));
-              showStep(stepToken);
-            }
-          } catch (error) {
-            console.error('[Raven] Error parsing auth response:', error);
-            showStep(stepToken);
-          }
-        }
-      );
-    } catch (error) {
-      console.error('[Raven] Error launching auth flow:', error);
+    // Send message to background service worker to handle auth
+    // Background persists even when popup closes during OAuth flow
+    chrome.runtime.sendMessage({ type: 'START_AUTH0_LOGIN' }, async (response) => {
+      console.log('[Raven] Auth response from background:', response);
+      
+      // Reset button state
       btnConnect.classList.remove('is-loading');
       btnConnect.disabled = false;
-      showStep(stepToken);
-    }
+      
+      if (chrome.runtime.lastError) {
+        console.error('[Raven] Message error:', chrome.runtime.lastError);
+        showStep(stepToken);
+        return;
+      }
+      
+      if (response?.success) {
+        console.log('[Raven] Auth successful!');
+        showStep(stepSuccess);
+        setTimeout(() => window.close(), 1600);
+      } else if (response?.canceled) {
+        console.log('[Raven] Auth canceled by user');
+        // Stay on welcome screen
+      } else {
+        console.error('[Raven] Auth failed:', response?.error);
+        showStep(stepToken);
+      }
+    });
   });
   
   // ── Manual token entry ─────────────────────────────────────────────────────
