@@ -70,7 +70,6 @@ function HistoryChart({ data, currentScore, dark }: { data: ScorePoint[]; curren
 	const chartW = W - PAD_X * 2;
 	const chartH = H - PAD_TOP - PAD_BOTTOM;
 
-	// append current score as the latest point
 	const points = [...data, { date: "Now", score: currentScore }];
 	const n = points.length;
 
@@ -81,11 +80,7 @@ function HistoryChart({ data, currentScore, dark }: { data: ScorePoint[]; curren
 	function y(v: number) { return PAD_TOP + chartH - ((v - yMin) / (yMax - yMin)) * chartH; }
 
 	const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.score).toFixed(1)}`).join(" ");
-
-	// gradient fill area
 	const areaPath = `${linePath} L${x(n - 1).toFixed(1)},${(PAD_TOP + chartH).toFixed(1)} L${PAD_X},${(PAD_TOP + chartH).toFixed(1)} Z`;
-
-	// horizontal guide lines
 	const guides = [0, 25, 50, 75, 100];
 
 	const mutedColor = dark ? "#8a8fa8" : "#8a8680";
@@ -101,7 +96,6 @@ function HistoryChart({ data, currentScore, dark }: { data: ScorePoint[]; curren
 				</linearGradient>
 			</defs>
 
-			{/* guide lines + labels */}
 			{guides.map((v) => (
 				<g key={v}>
 					<line x1={PAD_X} y1={y(v)} x2={W - PAD_X} y2={y(v)} stroke={borderColor} strokeWidth="1" />
@@ -109,18 +103,13 @@ function HistoryChart({ data, currentScore, dark }: { data: ScorePoint[]; curren
 				</g>
 			))}
 
-			{/* area fill */}
 			<path d={areaPath} fill="url(#areaGrad)" />
-
-			{/* line */}
 			<path d={linePath} fill="none" stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
 
-			{/* data points */}
 			{points.map((p, i) => (
 				<circle key={i} cx={x(i)} cy={y(p.score)} r="3" fill={accentColor} />
 			))}
 
-			{/* x-axis labels */}
 			{points.map((p, i) => (
 				<text key={i} x={x(i)} y={H - 6} textAnchor="middle" fill={mutedColor} fontSize="8" fontFamily="'DM Mono', monospace">
 					{p.date}
@@ -137,7 +126,6 @@ export default function Dashboard() {
 	const navigate = useNavigate();
 	const [visible, setVisible] = useState(false);
 	const [dark, setDark] = useState(true);
-	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [animatedScore, setAnimatedScore] = useState(0);
 
 	const handleLogout = () => {
@@ -183,7 +171,6 @@ export default function Dashboard() {
 		return () => cancelAnimationFrame(raf);
 	}, [visible, score]);
 
-	// Score ring math (compact version)
 	const RADIUS = 38;
 	const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 	const offset = CIRCUMFERENCE - (animatedScore / 100) * CIRCUMFERENCE;
@@ -205,11 +192,10 @@ export default function Dashboard() {
 					--accent: #e05444;
 					--border: rgba(255,255,255,0.1);
 					--bg: #0d0d14;
-					--nav-bg: rgba(255,255,255,0.04);
+					--nav-bg: rgba(13,13,20,0.85);
 					--btn-hover-bg: rgba(255,255,255,0.08);
 					--ring-track: rgba(255,255,255,0.06);
-					--sidebar-bg: #111119;
-					--overlay-bg: rgba(0,0,0,0.5);
+					--panel-bg: #111119;
 					--grain-opacity: 0.06;
 				}
 				.theme-light {
@@ -218,11 +204,10 @@ export default function Dashboard() {
 					--accent: #c0392b;
 					--border: rgba(14,14,14,0.12);
 					--bg: #f5f2ed;
-					--nav-bg: rgba(245,242,237,0.7);
+					--nav-bg: rgba(245,242,237,0.85);
 					--btn-hover-bg: rgba(14,14,14,0.04);
 					--ring-track: rgba(14,14,14,0.08);
-					--sidebar-bg: #ebe8e2;
-					--overlay-bg: rgba(0,0,0,0.2);
+					--panel-bg: #ebe8e2;
 					--grain-opacity: 0.035;
 				}
 
@@ -231,6 +216,7 @@ export default function Dashboard() {
 					background: var(--bg);
 					color: var(--ink);
 					font-family: 'DM Mono', monospace;
+					display: flex;
 					overflow-x: hidden;
 					transition: background 0.5s ease, color 0.5s ease;
 				}
@@ -254,151 +240,134 @@ export default function Dashboard() {
 					transition: opacity 0.5s ease;
 				}
 
-				/* ── SIDEBAR ── */
-				.sidebar-overlay {
-					position: fixed; inset: 0; z-index: 90;
-					background: var(--overlay-bg);
-					opacity: 0; pointer-events: none;
-					transition: opacity 0.3s ease;
-				}
-				.sidebar-overlay.open { opacity: 1; pointer-events: auto; }
-
-				.sidebar {
-					position: fixed; top: 0; left: 0; bottom: 0;
-					width: 320px; max-width: 85vw;
-					z-index: 100;
-					background: var(--sidebar-bg);
+				/* ── LEFT PANEL ── */
+				.left-panel {
+					position: fixed;
+					top: 0; left: 0; bottom: 0;
+					width: 320px;
+					z-index: 10;
+					background: var(--panel-bg);
 					border-right: 1px solid var(--border);
-					transform: translateX(-100%);
-					transition: transform 0.35s cubic-bezier(.4,0,.2,1), background 0.5s ease, border-color 0.5s ease;
 					display: flex; flex-direction: column;
 					overflow-y: auto;
+					transition: background 0.5s ease, border-color 0.5s ease;
+					opacity: 0; transform: translateX(-12px);
+					transition: opacity 0.6s ease 0.1s, transform 0.6s ease 0.1s,
+					            background 0.5s ease, border-color 0.5s ease;
 				}
-				.sidebar.open { transform: translateX(0); }
+				.left-panel.visible { opacity: 1; transform: translateX(0); }
 
-				.sidebar-header {
-					display: flex; align-items: center; justify-content: space-between;
-					padding: 28px 24px;
+				.panel-logo {
+					display: flex; align-items: center; gap: 10px;
+					padding: 28px 24px 24px;
 					border-bottom: 1px solid var(--border);
-				}
-				.sidebar-title {
 					font-family: 'Cormorant Garamond', serif;
-					font-size: 18px; font-weight: 300;
-					letter-spacing: 0.1em; text-transform: uppercase;
+					font-size: 20px; font-weight: 300;
+					letter-spacing: 0.12em; text-transform: uppercase;
 					color: var(--ink);
-					transition: color 0.5s ease;
+					transition: color 0.5s ease, border-color 0.5s ease;
 				}
-				.sidebar-close {
-					background: none; border: none; cursor: pointer;
-					color: var(--muted); padding: 4px;
-					transition: color 0.2s ease;
-				}
-				.sidebar-close:hover { color: var(--ink); }
-				.sidebar-close svg { width: 18px; height: 18px; display: block; }
+				.panel-logo svg { width: 16px; height: 16px; flex-shrink: 0; }
 
-				.sidebar-nav {
-					padding: 20px 24px;
+				.panel-nav {
+					padding: 16px 16px;
 					border-bottom: 1px solid var(--border);
-					display: flex; flex-direction: column; gap: 4px;
+					display: flex; flex-direction: column; gap: 2px;
+					transition: border-color 0.5s ease;
 				}
-				.sidebar-nav-item {
+				.panel-nav-item {
 					font-family: 'DM Mono', monospace; font-size: 11px;
-					letter-spacing: 0.08em; text-transform: uppercase;
+					letter-spacing: 0.07em; text-transform: uppercase;
 					color: var(--muted); background: none; border: none;
-					text-align: left; padding: 10px 12px; border-radius: 3px;
+					text-align: left; padding: 9px 12px; border-radius: 3px;
 					cursor: pointer;
 					transition: color 0.2s ease, background 0.2s ease;
 				}
-				.sidebar-nav-item:hover { color: var(--ink); background: var(--btn-hover-bg); }
-				.sidebar-nav-item.active { color: var(--ink); }
+				.panel-nav-item:hover { color: var(--ink); background: var(--btn-hover-bg); }
+				.panel-nav-item.active { color: var(--ink); }
 
-				.sidebar-services {
-					padding: 20px 24px; flex: 1;
+				.panel-services {
+					padding: 20px 16px;
+					flex: 1;
 				}
-				.sidebar-label {
+				.panel-label {
 					font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
-					color: var(--muted); margin-bottom: 16px;
+					color: var(--muted); margin-bottom: 14px;
 					transition: color 0.5s ease;
 				}
-				.sb-service {
+				.svc-row {
 					display: flex; align-items: center; justify-content: space-between;
-					padding: 10px 0;
+					padding: 9px 0;
 					border-bottom: 1px solid var(--border);
 					transition: border-color 0.5s ease;
 				}
-				.sb-service:last-child { border-bottom: none; }
-				.sb-svc-info { display: flex; flex-direction: column; gap: 1px; }
-				.sb-svc-name {
+				.svc-row:last-child { border-bottom: none; }
+				.svc-info { display: flex; flex-direction: column; gap: 1px; }
+				.svc-name {
 					font-size: 12px; color: var(--ink); letter-spacing: 0.02em;
 					transition: color 0.5s ease;
 				}
-				.sb-svc-domain {
+				.svc-domain {
 					font-size: 9px; color: var(--muted); letter-spacing: 0.04em;
 					transition: color 0.5s ease;
 				}
-				.sb-svc-date {
+				.svc-date {
 					font-size: 9px; color: var(--muted); letter-spacing: 0.04em;
 					transition: color 0.5s ease;
 				}
 
-				.sidebar-footer {
+				.panel-footer {
 					padding: 16px 24px;
 					border-top: 1px solid var(--border);
+					transition: border-color 0.5s ease;
 				}
-				.sidebar-footer-btn {
+				.panel-footer-btn {
 					font-family: 'DM Mono', monospace; font-size: 10px;
 					letter-spacing: 0.08em; text-transform: uppercase;
 					color: var(--muted); background: none; border: none;
 					cursor: pointer; padding: 8px 0;
 					transition: color 0.2s ease;
 				}
-				.sidebar-footer-btn:hover { color: var(--accent); }
+				.panel-footer-btn:hover { color: var(--accent); }
 
-				/* ── NAV ── */
+				/* ── MAIN AREA ── */
+				.main-area {
+					flex: 1;
+					margin-left: 320px;
+					display: flex; flex-direction: column;
+					min-height: 100vh;
+					position: relative; z-index: 1;
+				}
+
+				/* ── TOP NAV ── */
 				.dash-nav {
 					display: flex; align-items: center; justify-content: space-between;
-					padding: 28px 48px;
+					padding: 20px 48px;
 					border-bottom: 1px solid var(--border);
 					backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
 					background: var(--nav-bg);
-					position: relative; z-index: 2;
+					position: sticky; top: 0; z-index: 5;
 					opacity: 0; transform: translateY(-8px);
-					transition: opacity 0.6s ease, transform 0.6s ease, background 0.5s ease;
+					transition: opacity 0.6s ease, transform 0.6s ease,
+					            background 0.5s ease, border-color 0.5s ease;
 				}
 				.dash-nav.visible { opacity: 1; transform: translateY(0); }
 
-				.nav-left { display: flex; align-items: center; gap: 16px; }
-
-				.hamburger {
-					background: none; border: none; cursor: pointer;
-					color: var(--muted); padding: 4px;
-					transition: color 0.2s ease;
+				.nav-greeting {
+					display: flex; flex-direction: column; gap: 1px;
 				}
-				.hamburger:hover { color: var(--ink); }
-				.hamburger svg { width: 20px; height: 20px; display: block; }
-
-				.nav-logo {
+				.nav-greeting-name {
 					font-family: 'Cormorant Garamond', serif;
-					font-size: 22px; font-weight: 300;
-					letter-spacing: 0.12em; text-transform: uppercase;
-					color: var(--ink); text-decoration: none;
-					display: flex; align-items: center; gap: 10px;
+					font-size: 16px; font-weight: 300; letter-spacing: 0.04em;
+					color: var(--ink);
 					transition: color 0.5s ease;
 				}
-				.nav-logo svg { width: 18px; height: 18px; }
+				.nav-greeting-email {
+					font-size: 10px; color: var(--muted); letter-spacing: 0.04em;
+					transition: color 0.5s ease;
+				}
 
 				.nav-right { display: flex; align-items: center; gap: 12px; }
-
-				.nav-btn {
-					font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 400;
-					letter-spacing: 0.08em; text-transform: uppercase;
-					padding: 9px 18px; border-radius: 2px;
-					cursor: pointer; text-decoration: none;
-					transition: all 0.2s ease;
-					border: 1px solid transparent;
-					color: var(--muted); background: transparent;
-				}
-				.nav-btn:hover { color: var(--ink); border-color: var(--border); background: var(--btn-hover-bg); }
 
 				.theme-toggle {
 					width: 48px; height: 26px; border-radius: 13px;
@@ -425,12 +394,14 @@ export default function Dashboard() {
 				.theme-light .icon-sun  { opacity: 1; }
 				.theme-light .icon-moon { opacity: 0.25; }
 
-				/* ── MAIN BODY ── */
+				/* ── MAIN CONTENT ── */
 				.dash-body {
-					position: relative; z-index: 1;
-					max-width: 840px;
+					flex: 1;
+					display: flex; flex-direction: column; justify-content: center;
+					padding: 48px 72px 80px;
+					max-width: 860px;
+					width: 100%;
 					margin: 0 auto;
-					padding: 48px 48px 80px;
 				}
 
 				/* TOP ROW: greeting left, score right */
@@ -438,7 +409,7 @@ export default function Dashboard() {
 					display: flex; align-items: center; justify-content: space-between;
 					margin-bottom: 56px;
 					opacity: 0; transform: translateY(12px);
-					transition: opacity 0.7s ease 0.15s, transform 0.7s ease 0.15s;
+					transition: opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s;
 				}
 				.dash-top.visible { opacity: 1; transform: translateY(0); }
 
@@ -508,7 +479,7 @@ export default function Dashboard() {
 				/* CHART SECTION */
 				.chart-section {
 					opacity: 0; transform: translateY(16px);
-					transition: opacity 0.7s ease 0.3s, transform 0.7s ease 0.3s;
+					transition: opacity 0.7s ease 0.35s, transform 0.7s ease 0.35s;
 				}
 				.chart-section.visible { opacity: 1; transform: translateY(0); }
 
@@ -524,9 +495,24 @@ export default function Dashboard() {
 					padding: 8px 0 4px;
 				}
 
-				@media (max-width: 700px) {
-					.dash-nav { padding: 20px 24px; }
-					.dash-body { padding: 32px 20px 60px; }
+				/* ── RESPONSIVE ── */
+				@media (max-width: 1000px) {
+					.left-panel { width: 260px; }
+					.main-area { margin-left: 260px; }
+					.dash-body { padding: 32px 40px 60px; }
+				}
+
+				@media (max-width: 720px) {
+					.left-panel {
+						width: 100%;
+						position: relative;
+						height: auto;
+						border-right: none;
+						border-bottom: 1px solid var(--border);
+					}
+					.dash-root { flex-direction: column; }
+					.main-area { margin-left: 0; }
+					.dash-body { padding: 28px 20px 60px; justify-content: flex-start; }
 					.dash-top { flex-direction: column; align-items: flex-start; gap: 28px; }
 					.dash-greeting h1 { font-size: 28px; }
 				}
@@ -539,121 +525,105 @@ export default function Dashboard() {
 				</div>
 				<div className="grain" />
 
-				{/* ── Sidebar overlay ── */}
-				<div
-					className={`sidebar-overlay ${sidebarOpen ? "open" : ""}`}
-					onClick={() => setSidebarOpen(false)}
-				/>
-
-				{/* ── Sidebar ── */}
-				<aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
-					<div className="sidebar-header">
-						<span className="sidebar-title">Menu</span>
-						<button className="sidebar-close" onClick={() => setSidebarOpen(false)}>
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-								<line x1="18" y1="6" x2="6" y2="18" />
-								<line x1="6" y1="6" x2="18" y2="18" />
-							</svg>
-						</button>
+				{/* ── Left panel ── */}
+				<aside className={`left-panel ${visible ? "visible" : ""}`}>
+					<div className="panel-logo">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+							<path d="M12 2C6 2 3 7 3 12c0 3 1.5 5.5 4 7l5-9 5 9c2.5-1.5 4-4 4-7 0-5-3-10-9-10z" />
+						</svg>
+						Raven
 					</div>
 
-					<nav className="sidebar-nav">
-						<button className="sidebar-nav-item active">Dashboard</button>
-						<button className="sidebar-nav-item">Scan a policy</button>
-						<button className="sidebar-nav-item">Reports</button>
-						<button className="sidebar-nav-item">Preferences</button>
+					<nav className="panel-nav">
+						<button className="panel-nav-item active">Dashboard</button>
+						<button className="panel-nav-item">Scan a policy</button>
+						<button className="panel-nav-item">Reports</button>
+						<button className="panel-nav-item">Preferences</button>
 					</nav>
 
-					<div className="sidebar-services">
-						<p className="sidebar-label">Linked services ({MOCK_SERVICES.length})</p>
+					<div className="panel-services">
+						<p className="panel-label">Linked services ({MOCK_SERVICES.length})</p>
 						{MOCK_SERVICES.map((svc) => (
-							<div className="sb-service" key={svc.domain}>
-								<div className="sb-svc-info">
-									<span className="sb-svc-name">{svc.name}</span>
-									<span className="sb-svc-domain">{svc.domain}</span>
+							<div className="svc-row" key={svc.domain}>
+								<div className="svc-info">
+									<span className="svc-name">{svc.name}</span>
+									<span className="svc-domain">{svc.domain}</span>
 								</div>
-								<span className="sb-svc-date">{svc.linkedAt}</span>
+								<span className="svc-date">{svc.linkedAt}</span>
 							</div>
 						))}
 					</div>
 
-					<div className="sidebar-footer">
-						<button className="sidebar-footer-btn" onClick={handleLogout}>
+					<div className="panel-footer">
+						<button className="panel-footer-btn" onClick={handleLogout}>
 							Log out
 						</button>
 					</div>
 				</aside>
 
-				{/* ── Top nav ── */}
-				<div className={`dash-nav ${visible ? "visible" : ""}`}>
-					<div className="nav-left">
-						<button className="hamburger" onClick={() => setSidebarOpen(true)}>
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-								<line x1="3" y1="6" x2="21" y2="6" />
-								<line x1="3" y1="12" x2="21" y2="12" />
-								<line x1="3" y1="18" x2="21" y2="18" />
-							</svg>
-						</button>
-						<span className="nav-logo">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-								<path d="M12 2C6 2 3 7 3 12c0 3 1.5 5.5 4 7l5-9 5 9c2.5-1.5 4-4 4-7 0-5-3-10-9-10z" />
-							</svg>
-							Raven
-						</span>
-					</div>
-					<div className="nav-right">
-						<button className="nav-btn" onClick={handleLogout}>Log out</button>
-						<button
-							className="theme-toggle"
-							onClick={() => setDark(!dark)}
-							title={dark ? "Switch to light mode" : "Switch to dark mode"}
-						>
-							<span className="toggle-icon icon-sun">☀️</span>
-							<span className="toggle-icon icon-moon">🌙</span>
-							<span className="toggle-knob" />
-						</button>
-					</div>
-				</div>
-
-				{/* ── Main content ── */}
-				<div className="dash-body">
-					{/* Top row: greeting + compact score */}
-					<div className={`dash-top ${visible ? "visible" : ""}`}>
-						<div className="dash-greeting">
-							<h1>
-								Welcome{auth0Context?.user?.given_name ? `, ${auth0Context.user.given_name}` : ""}<em>.</em>
-							</h1>
-							<p>{auth0Context?.user?.email || ""}</p>
+				{/* ── Main area ── */}
+				<div className="main-area">
+					{/* Top nav */}
+					<div className={`dash-nav ${visible ? "visible" : ""}`}>
+						<div className="nav-greeting">
+							{auth0Context?.user?.given_name && (
+								<span className="nav-greeting-name">{auth0Context.user.given_name}</span>
+							)}
+							{auth0Context?.user?.email && (
+								<span className="nav-greeting-email">{auth0Context.user.email}</span>
+							)}
 						</div>
+						<div className="nav-right">
+							<button
+								className="theme-toggle"
+								onClick={() => setDark(!dark)}
+								title={dark ? "Switch to light mode" : "Switch to dark mode"}
+							>
+								<span className="toggle-icon icon-sun">☀️</span>
+								<span className="toggle-icon icon-moon">🌙</span>
+								<span className="toggle-knob" />
+							</button>
+						</div>
+					</div>
 
-						<div className="score-compact">
-							<div className="score-ring-wrap">
-								<svg className="score-ring-svg" viewBox="0 0 86 86">
-									<circle className="ring-track" cx="43" cy="43" r={RADIUS} />
-									<circle
-										className="ring-fill"
-										cx="43" cy="43" r={RADIUS}
-										strokeDasharray={CIRCUMFERENCE}
-										strokeDashoffset={offset}
-									/>
-								</svg>
-								<div className="score-number">
-									<span className="score-value">{animatedScore}</span>
-									<span className="score-unit">/ 100</span>
+					{/* Main content */}
+					<div className="dash-body">
+						<div className={`dash-top ${visible ? "visible" : ""}`}>
+							<div className="dash-greeting">
+								<h1>
+									Welcome{auth0Context?.user?.given_name ? `, ${auth0Context.user.given_name}` : ""}<em>.</em>
+								</h1>
+								<p>Here's your privacy overview.</p>
+							</div>
+
+							<div className="score-compact">
+								<div className="score-ring-wrap">
+									<svg className="score-ring-svg" viewBox="0 0 86 86">
+										<circle className="ring-track" cx="43" cy="43" r={RADIUS} />
+										<circle
+											className="ring-fill"
+											cx="43" cy="43" r={RADIUS}
+											strokeDasharray={CIRCUMFERENCE}
+											strokeDashoffset={offset}
+										/>
+									</svg>
+									<div className="score-number">
+										<span className="score-value">{animatedScore}</span>
+										<span className="score-unit">/ 100</span>
+									</div>
+								</div>
+								<div className="score-meta">
+									<span className="score-label-text">{scoreLabel}</span>
+									<span className="score-sublabel">Privacy score</span>
 								</div>
 							</div>
-							<div className="score-meta">
-								<span className="score-label-text">{scoreLabel}</span>
-								<span className="score-sublabel">Privacy score</span>
-							</div>
 						</div>
-					</div>
 
-					{/* History chart */}
-					<div className={`chart-section ${visible ? "visible" : ""}`}>
-						<p className="section-label">Score history</p>
-						<div className="chart-wrap">
-							<HistoryChart data={MOCK_HISTORY} currentScore={score} dark={dark} />
+						<div className={`chart-section ${visible ? "visible" : ""}`}>
+							<p className="section-label">Score history</p>
+							<div className="chart-wrap">
+								<HistoryChart data={MOCK_HISTORY} currentScore={score} dark={dark} />
+							</div>
 						</div>
 					</div>
 				</div>
