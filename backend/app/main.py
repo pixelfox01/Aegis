@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from app.routers.agreements import router as agreement_router
 from app.routers.summary import router as summary_router
 from app.routers.auth import router as auth_router
+from app.routers.users import router as users_router
 from app.db import create_db_and_tables
 from app.settings import get_settings
 
@@ -15,7 +16,7 @@ load_dotenv()
 
 settings = get_settings()
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None)
 
 origins = [origin.strip() for origin in settings.cors_origins.split(",")]
 
@@ -30,6 +31,7 @@ app.add_middleware(
 app.include_router(agreement_router)
 app.include_router(summary_router)
 app.include_router(auth_router)
+app.include_router(users_router)
 
 
 @app.on_event("startup")
