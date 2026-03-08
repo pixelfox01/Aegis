@@ -1,0 +1,123 @@
+---
+title: "Environment Variables"
+description: "Complete reference for configuring Aegis frontend, backend, and database using environment variables"
+---
+
+# Environment Variables
+
+Configure Aegis using environment variables in your `.env` file.
+
+## Frontend Variables
+
+### Required
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_API_URL` | Backend API endpoint | `http://localhost:8000` |
+| `VITE_AUTH0_DOMAIN` | Auth0 tenant domain | `aegis.us.auth0.com` |
+| `VITE_AUTH0_CLIENT_ID` | Auth0 application client ID | `abc123...` |
+
+### Optional
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_APP_NAME` | Application display name | `Aegis` |
+| `VITE_ENABLE_ANALYTICS` | Enable analytics tracking | `false` |
+
+## Backend Variables
+
+### Required
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/aegis` |
+| `SECRET_KEY` | Application secret for JWT signing | Generate with `openssl rand -hex 32` |
+| `AUTH0_DOMAIN` | Auth0 tenant domain | `aegis.us.auth0.com` |
+| `AUTH0_AUDIENCE` | Auth0 API identifier | `https://api.aegis.com` |
+
+### Optional
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CORS_ORIGINS` | Allowed CORS origins (comma-separated) | `http://localhost:3000` |
+| `LOG_LEVEL` | Logging verbosity | `info` |
+| `REDIS_URL` | Redis connection string for caching | None |
+| `WORKERS` | Number of worker processes | `4` |
+
+## Database Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `POSTGRES_USER` | Database username | `aegis` |
+| `POSTGRES_PASSWORD` | Database password | **Required** |
+| `POSTGRES_DB` | Database name | `aegis` |
+
+## Example .env File
+
+```bash
+# Frontend
+VITE_API_URL=http://localhost:8000
+VITE_AUTH0_DOMAIN=your-tenant.us.auth0.com
+VITE_AUTH0_CLIENT_ID=your_client_id
+
+# Backend
+DATABASE_URL=postgresql://aegis:your_db_password@db:5432/aegis
+SECRET_KEY=your_generated_secret_key_here
+AUTH0_DOMAIN=your-tenant.us.auth0.com
+AUTH0_AUDIENCE=https://api.aegis.com
+CORS_ORIGINS=http://localhost:3000,https://aegis.yourdomain.com
+
+# Database
+POSTGRES_USER=aegis
+POSTGRES_PASSWORD=your_db_password
+POSTGRES_DB=aegis
+```
+
+<Warning>
+Never commit your `.env` file to version control. It contains sensitive credentials.
+</Warning>
+
+## Generating Secrets
+
+### SECRET_KEY
+
+Generate a secure random secret:
+
+```bash
+openssl rand -hex 32
+```
+
+### Database Password
+
+Generate a strong password:
+
+```bash
+openssl rand -base64 32
+```
+
+<Tip>
+Store these secrets in a password manager and use different values for development and production environments.
+</Tip>
+
+## Environment-Specific Configuration
+
+### Development
+
+```bash
+# .env.development
+VITE_API_URL=http://localhost:8000
+LOG_LEVEL=debug
+```
+
+### Production
+
+```bash
+# .env.production
+VITE_API_URL=https://api.yourdomain.com
+LOG_LEVEL=warning
+WORKERS=8
+```
+
+<Info>
+Docker Compose will automatically load `.env` files from the project root.
+</Info>
