@@ -78,4 +78,37 @@ export const surveyQuestionConfigs: Record<string, Omit<SurveyQuestion, 'id'>> =
 		],
 		default: "nice",
 	},
+	data_encryption: {
+		question: "How important is data encryption to you?",
+		description:
+			"Encryption protects your data from unauthorized access, both in transit and at rest.",
+		options: [
+			{ value: "essential", label: "Essential — must have encryption" },
+			{ value: "preferred", label: "Preferred but not required" },
+			{ value: "indifferent", label: "Not something I consider" },
+		],
+		default: "preferred",
+	},
+	gdpr_rights: {
+		question: "How much do you value GDPR-style data rights?",
+		description:
+			"Rights like data portability, access requests, and the right to be forgotten.",
+		options: [
+			{ value: "important", label: "Very important to me" },
+			{ value: "somewhat", label: "Somewhat important" },
+			{ value: "unconcerned", label: "Not a concern" },
+		],
+		default: "somewhat",
+	},
+	opt_out: {
+		question: "Is the ability to opt out of data collection important?",
+		description:
+			"Some services allow you to limit or stop data collection while still using the product.",
+		options: [
+			{ value: "required", label: "Required — I want full control" },
+			{ value: "nice", label: "Nice to have" },
+			{ value: "unnecessary", label: "Not necessary for me" },
+		],
+		default: "nice",
+	},
 };

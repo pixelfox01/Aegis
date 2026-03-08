@@ -24,10 +24,11 @@ class LinkedAccountResponse(BaseModel):
 @router.get("", response_model=list[LinkedAccountResponse])
 def get_linked_accounts(
     authorization: Optional[str] = Header(None),
+    x_user_sub: Optional[str] = Header(None, alias="X-User-Sub"),
     session: SessionDep = None
 ):
     """Get all linked accounts for the authenticated user"""
-    user = get_current_app_user(authorization, session)
+    user = get_current_app_user(authorization, session, x_user_sub)
     
     linked_accounts = session.exec(
         select(LinkedAccount, Agreement)
@@ -52,10 +53,11 @@ def get_linked_accounts(
 def create_linked_account(
     request: CreateLinkedAccountRequest,
     authorization: Optional[str] = Header(None),
+    x_user_sub: Optional[str] = Header(None, alias="X-User-Sub"),
     session: SessionDep = None
 ):
     """Link a new account/service to the authenticated user"""
-    user = get_current_app_user(authorization, session)
+    user = get_current_app_user(authorization, session, x_user_sub)
     
     agreement = session.get(Agreement, request.agreement_id)
     if not agreement:

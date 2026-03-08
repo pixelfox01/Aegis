@@ -6,7 +6,7 @@ import { env } from "../config/env";
 
 export default function OnboardingSurvey() {
 	const navigate = useNavigate();
-	const { getAccessTokenSilently } = useAuth0();
+	const { getAccessTokenSilently, user } = useAuth0();
 	const [step, setStep] = useState(0);
 	const [answers, setAnswers] = useState<Record<string, string>>({});
 	const [visible, setVisible] = useState(false);
@@ -110,20 +110,27 @@ export default function OnboardingSurvey() {
 		
 		try {
 			let token: string | null = null;
+			let userSub: string | undefined;
 			
 			if (env.authMode === 'auth0') {
 				token = await getAccessTokenSilently();
+				userSub = user?.sub;
 			} else {
 				token = localStorage.getItem('aegis_token');
 			}
 			
 			if (token) {
+				const headers: Record<string, string> = {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${token}`
+				};
+				if (userSub) {
+					headers['X-User-Sub'] = userSub;
+				}
+				
 				await fetch(`${env.apiUrl}/users/preferences`, {
 					method: 'PUT',
-					headers: {
-						'Content-Type': 'application/json',
-						'Authorization': `Bearer ${token}`
-					},
+					headers,
 					body: JSON.stringify({ preferences: prefs })
 				});
 			}

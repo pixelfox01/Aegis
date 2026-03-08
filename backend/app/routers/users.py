@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
-from sqlmodel import select
+from sqlmodel import select, Session
 from app.db import SessionDep
 from app.models import AppUser, UserPreference, Question, User
 from app.auth import decode_access_token
@@ -30,7 +30,11 @@ class SavePreferencesRequest(BaseModel):
     preferences: dict[str, str]
 
 
-def get_current_app_user(authorization: Optional[str] = Header(None), session: SessionDep = None) -> AppUser:
+def get_current_app_user(
+    authorization: Optional[str],
+    session: Session,
+    x_user_sub: Optional[str] = None
+) -> AppUser:
     """Extract and validate user from token (Auth0 or local)"""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -38,19 +42,21 @@ def get_current_app_user(authorization: Optional[str] = Header(None), session: S
     token = authorization.replace("Bearer ", "")
     payload = decode_access_token(token)
     
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    sub = None
+    if payload:
+        sub = payload.get("sub")
     
-    sub = payload.get("sub")
+    # For Auth0 JWE tokens that can't be decoded, use X-User-Sub header
+    if not sub and x_user_sub:
+        sub = x_user_sub
+    
     if not sub:
         raise HTTPException(status_code=401, detail="Invalid token - no sub claim")
     
     if sub.startswith("auth0|") or sub.startswith("google-oauth2|") or "|" in sub:
         auth_sub = sub
-        auth_provider = "auth0"
     else:
         auth_sub = f"local:{sub}"
-        auth_provider = "local"
     
     user = session.exec(select(AppUser).where(AppUser.auth_sub == auth_sub)).first()
     
@@ -138,10 +144,11 @@ def sync_user(
 @router.get("/me", response_model=UserResponse)
 def get_me(
     authorization: Optional[str] = Header(None),
+    x_user_sub: Optional[str] = Header(None, alias="X-User-Sub"),
     session: SessionDep = None
 ):
     """Get current user profile"""
-    user = get_current_app_user(authorization, session)
+    user = get_current_app_user(authorization, session, x_user_sub)
     
     return UserResponse(
         id=str(user.id),
@@ -153,10 +160,11 @@ def get_me(
 @router.get("/preferences")
 def get_preferences(
     authorization: Optional[str] = Header(None),
+    x_user_sub: Optional[str] = Header(None, alias="X-User-Sub"),
     session: SessionDep = None
 ):
     """Get user preferences"""
-    user = get_current_app_user(authorization, session)
+    user = get_current_app_user(authorization, session, x_user_sub)
     
     preferences = session.exec(
         select(UserPreference, Question)
@@ -181,10 +189,11 @@ def get_preferences(
 def save_preferences(
     request: SavePreferencesRequest,
     authorization: Optional[str] = Header(None),
+    x_user_sub: Optional[str] = Header(None, alias="X-User-Sub"),
     session: SessionDep = None
 ):
     """Save or update user preferences from survey answers"""
-    user = get_current_app_user(authorization, session)
+    user = get_current_app_user(authorization, session, x_user_sub)
     
     existing_prefs = session.exec(
         select(UserPreference).where(UserPreference.user_id == user.id)
