@@ -22,9 +22,8 @@ export interface SurveyQuestion {
 	default: string;
 }
 
-const surveyQuestions: SurveyQuestion[] = [
-	{
-		id: "data_collection",
+export const surveyQuestionConfigs: Record<string, Omit<SurveyQuestion, 'id'>> = {
+	data_collection: {
 		question: "How much do you care about what data is collected?",
 		description:
 			"This includes personal info, browsing habits, location data, and device identifiers.",
@@ -35,8 +34,7 @@ const surveyQuestions: SurveyQuestion[] = [
 		],
 		default: "medium",
 	},
-	{
-		id: "third_party_sharing",
+	third_party_sharing: {
 		question: "How do you feel about third-party data sharing?",
 		description:
 			"Many services share or sell your data to advertisers, analytics firms, or other partners.",
@@ -47,8 +45,7 @@ const surveyQuestions: SurveyQuestion[] = [
 		],
 		default: "moderate",
 	},
-	{
-		id: "data_retention",
+	data_retention: {
 		question: "Do you care how long companies keep your data?",
 		description:
 			"Some services retain data indefinitely, even after you delete your account.",
@@ -59,8 +56,7 @@ const surveyQuestions: SurveyQuestion[] = [
 		],
 		default: "moderate",
 	},
-	{
-		id: "tracking_cookies",
+	tracking_cookies: {
 		question: "How do you feel about tracking and cookies?",
 		description:
 			"Cross-site tracking, fingerprinting, and persistent cookies used for ad targeting.",
@@ -71,8 +67,7 @@ const surveyQuestions: SurveyQuestion[] = [
 		],
 		default: "limit",
 	},
-	{
-		id: "account_deletion",
+	account_deletion: {
 		question: "Is easy account deletion important to you?",
 		description:
 			"Some services make it difficult to fully delete your account and associated data.",
@@ -83,6 +78,37 @@ const surveyQuestions: SurveyQuestion[] = [
 		],
 		default: "nice",
 	},
-];
-
-export default surveyQuestions;
+	data_encryption: {
+		question: "How important is data encryption to you?",
+		description:
+			"Encryption protects your data from unauthorized access, both in transit and at rest.",
+		options: [
+			{ value: "essential", label: "Essential — must have encryption" },
+			{ value: "preferred", label: "Preferred but not required" },
+			{ value: "indifferent", label: "Not something I consider" },
+		],
+		default: "preferred",
+	},
+	gdpr_rights: {
+		question: "How much do you value GDPR-style data rights?",
+		description:
+			"Rights like data portability, access requests, and the right to be forgotten.",
+		options: [
+			{ value: "important", label: "Very important to me" },
+			{ value: "somewhat", label: "Somewhat important" },
+			{ value: "unconcerned", label: "Not a concern" },
+		],
+		default: "somewhat",
+	},
+	opt_out: {
+		question: "Is the ability to opt out of data collection important?",
+		description:
+			"Some services allow you to limit or stop data collection while still using the product.",
+		options: [
+			{ value: "required", label: "Required — I want full control" },
+			{ value: "nice", label: "Nice to have" },
+			{ value: "unnecessary", label: "Not necessary for me" },
+		],
+		default: "nice",
+	},
+};

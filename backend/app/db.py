@@ -13,9 +13,9 @@ INITIAL_QUESTIONS = [
     {'text': 'How is user data shared with third parties?', 'survey_key': 'third_party_sharing'},
     {'text': 'Can users delete their data?', 'survey_key': 'account_deletion'},
     {'text': 'How long is data retained?', 'survey_key': 'data_retention'},
-    {'text': 'Is data encrypted?', 'survey_key': None},
-    {'text': "What are users' rights under GDPR?", 'survey_key': None},
-    {'text': 'How can users opt out of data collection?', 'survey_key': None},
+    {'text': 'Is data encrypted?', 'survey_key': 'data_encryption'},
+    {'text': "What are users' rights under GDPR?", 'survey_key': 'gdpr_rights'},
+    {'text': 'How can users opt out of data collection?', 'survey_key': 'opt_out'},
     {'text': 'Are cookies used?', 'survey_key': 'tracking_cookies'},
 ]
 

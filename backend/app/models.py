@@ -18,6 +18,7 @@ class AppUser(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     preferences: list["UserPreference"] = Relationship(back_populates="user")
+    linked_accounts: list["LinkedAccount"] = Relationship(back_populates="user")
 
 
 class UserPreference(SQLModel, table=True):
@@ -59,3 +60,13 @@ class Summary(SQLModel, table=True):
 
     question: Question = Relationship(back_populates="summaries")
     agreement: Agreement = Relationship(back_populates="summaries")
+
+
+class LinkedAccount(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="appuser.id", index=True)
+    agreement_id: int = Field(foreign_key="agreement.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    user: AppUser = Relationship(back_populates="linked_accounts")
+    agreement: Agreement = Relationship()
