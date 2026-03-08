@@ -9,6 +9,8 @@ from app.routers.agreements import router as agreement_router
 from app.routers.summary import router as summary_router
 from app.routers.auth import router as auth_router
 from app.routers.users import router as users_router
+from app.routers.accounts import router as accounts_router
+from app.routers.questions import router as questions_router
 from app.db import create_db_and_tables
 from app.settings import get_settings
 
@@ -32,6 +34,8 @@ app.include_router(agreement_router)
 app.include_router(summary_router)
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(accounts_router)
+app.include_router(questions_router)
 
 
 @app.on_event("startup")
