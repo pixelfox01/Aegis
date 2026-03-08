@@ -15,7 +15,7 @@ load_dotenv()
 
 settings = get_settings()
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None)
 
 origins = [origin.strip() for origin in settings.cors_origins.split(",")]
 
