@@ -1,4 +1,4 @@
-import { getPolicySummary } from '../utils/api-client.js';
+import { getPolicySummary, linkAccount } from '../utils/api-client.js';
 
 // ── In-memory cache ───────────────────────────────────────────────────────────
 // Keyed by hostname. Cleared on service worker restart (expected MV3 behaviour).
@@ -44,6 +44,8 @@ async function getCachedOrFetch(hostname, policyType) {
         score: deriveScore(raw.answers),
         questions: raw.questions,
         answers: raw.answers,
+        agreementId: raw.agreement_id,
+        companyName: raw.company_name,
     };
     console.log('[Raven] Processed data sent to UI:', data);
     summaryCache.set(key, { data, timestamp: Date.now() });
@@ -81,6 +83,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         getCachedOrFetch(hostname, agreementType)
             .then((data) => sendResponse(data))
             .catch(() => sendResponse({ error: true }));
+
+        return true; // keep message channel open for async sendResponse
+    }
+
+    if (message.type === 'LINK_ACCOUNT') {
+        const { agreementId } = message.payload;
+
+        console.log('[Raven] LINK_ACCOUNT — agreementId:', agreementId);
+        linkAccount(agreementId)
+            .then((result) => {
+                console.log('[Raven] Account linked successfully:', result);
+                sendResponse({ success: true, data: result });
+            })
+            .catch((error) => {
+                console.error('[Raven] Failed to link account:', error);
+                sendResponse({ success: false, error: error.message });
+            });
 
         return true; // keep message channel open for async sendResponse
     }

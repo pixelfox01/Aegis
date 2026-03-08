@@ -11,7 +11,7 @@ export function extractCompanyName(hostname) {
     return parts[parts.length - 2];
 }
 
-async function request(path) {
+async function request(path, options = {}) {
     const [baseUrl, token, isSelfHosted] = await Promise.all([
         getApiUrl(),
         getAuthToken(),
@@ -23,19 +23,31 @@ async function request(path) {
         : { 'Authorization': `Bearer ${token}` };
 
     const fullUrl = `${baseUrl}${path}`;
-    console.log('[Raven] API request →', fullUrl);
+    const method = options.method || 'GET';
+    
+    console.log('[Raven] API request →', method, fullUrl);
     console.log('[Raven] Auth mode:', isSelfHosted ? 'X-API-Key' : 'Bearer token', '| Token set:', token !== null);
 
-    const response = await fetch(fullUrl, {
+    const fetchOptions = {
+        method,
         headers: {
             'Content-Type': 'application/json',
             ...authHeader
         }
-    });
+    };
+
+    if (options.body && method !== 'GET') {
+        fetchOptions.body = JSON.stringify(options.body);
+        console.log('[Raven] Request body:', options.body);
+    }
+
+    const response = await fetch(fullUrl, fetchOptions);
 
     console.log('[Raven] API response status:', response.status, response.statusText);
 
     if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        console.error('[Raven] API error response:', errorText);
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
@@ -91,12 +103,11 @@ export function computeAlignment(policyAnswers, userPreferences) {
 }
 
 
-export function addUserAccount(hostname) {
-    const company = extractCompanyName(hostname);
+export function linkAccount(agreementId) {
     return request('/api/accounts', {
-        method: 'PUT',
+        method: 'POST',
         body: {
-            company,
+            agreement_id: agreementId
         }
     });
 }

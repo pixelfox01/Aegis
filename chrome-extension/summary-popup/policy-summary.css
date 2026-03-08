@@ -490,3 +490,19 @@
   background: var(--r-surface);
   border-color: var(--r-ink);
 }
+
+.raven-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.raven-btn-success {
+  background: #2d6a4f;
+  border-color: #2d6a4f;
+  color: #fff;
+}
+
+.raven-btn-success:hover {
+  background: #2d6a4f;
+  border-color: #2d6a4f;
+}

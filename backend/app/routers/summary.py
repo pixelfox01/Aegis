@@ -30,12 +30,16 @@ def get_summary(
         ).all()
 
         return {
+            "agreement_id": agreement.id,
+            "company_name": agreement.company_name,
+            "agreement_type": agreement.agreement_type,
             "questions": [s.question.text for s in summaries],
             "answers": [
                 {
                     "summary_text": s.summary_text,
                     "concern_level": s.concern_level,
                     "quote": s.quote,
+                    "question_key": s.question.survey_key,
                 }
                 for s in summaries
             ],

@@ -204,7 +204,7 @@ function buildOverlayHTML(data) {
             </p>
             <div class="raven-actions">
               <button class="raven-btn-ghost" id="ravenDismiss">Dismiss</button>
-              <button class="raven-btn-primary"${readBtnStyle}>Read full policy →</button>
+              <button class="raven-btn-primary" id="ravenLinkAccount" data-agreement-id="${data.agreementId || ''}"${data.agreementId ? '' : ' style="display:none"'}>Accept & Link Account</button>
             </div>
           </div>
 
@@ -272,6 +272,47 @@ function showRavenOverlay(data) {
     wrapper.querySelector('#ravenClose')?.addEventListener('click', dismiss);
     wrapper.querySelector('#ravenDismiss')?.addEventListener('click', dismiss);
 
+    // Link Account button
+    const linkBtn = wrapper.querySelector('#ravenLinkAccount');
+    if (linkBtn) {
+        linkBtn.addEventListener('click', () => {
+            const agreementId = parseInt(linkBtn.dataset.agreementId, 10);
+            if (!agreementId) {
+                console.error('[Raven] No agreementId available');
+                return;
+            }
+
+            linkBtn.disabled = true;
+            linkBtn.textContent = 'Linking...';
+
+            chrome.runtime.sendMessage(
+                { type: 'LINK_ACCOUNT', payload: { agreementId } },
+                (response) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('[Raven] Link account error:', chrome.runtime.lastError);
+                        linkBtn.textContent = 'Error - Try again';
+                        linkBtn.disabled = false;
+                        return;
+                    }
+
+                    if (response?.success) {
+                        linkBtn.textContent = '✓ Account Linked';
+                        linkBtn.classList.add('raven-btn-success');
+                        setTimeout(dismiss, 1500);
+                    } else {
+                        console.error('[Raven] Link account failed:', response?.error);
+                        if (response?.error?.includes('already linked')) {
+                            linkBtn.textContent = 'Already Linked';
+                        } else {
+                            linkBtn.textContent = 'Error - Try again';
+                            linkBtn.disabled = false;
+                        }
+                    }
+                }
+            );
+        });
+    }
+
     // Collapsible items
     function wireCollapsibles(root) {
         root.querySelectorAll('.raven-item-toggle').forEach((btn) => {
@@ -308,12 +349,26 @@ function showRavenOverlay(data) {
                     if (!itemsList) return;
                     if (chrome.runtime.lastError || !response || response.error) {
                         itemsList.innerHTML = buildItemsHTML({ error: true });
+                        // Hide link button if no data
+                        const linkBtn = wrapper.querySelector('#ravenLinkAccount');
+                        if (linkBtn) linkBtn.style.display = 'none';
                     } else {
                         itemsList.innerHTML = buildItemsHTML(response);
                         wireCollapsibles(itemsList);
                         const scoreEl = wrapper.querySelector('#ravenScore');
                         if (scoreEl && typeof response.score === 'number') {
                             animateRavenScore(response.score, wrapper);
+                        }
+                        // Update link button with new agreementId
+                        const linkBtn = wrapper.querySelector('#ravenLinkAccount');
+                        if (linkBtn && response.agreementId) {
+                            linkBtn.dataset.agreementId = response.agreementId;
+                            linkBtn.style.display = '';
+                            linkBtn.textContent = 'Accept & Link Account';
+                            linkBtn.disabled = false;
+                            linkBtn.classList.remove('raven-btn-success');
+                        } else if (linkBtn) {
+                            linkBtn.style.display = 'none';
                         }
                     }
                 }
