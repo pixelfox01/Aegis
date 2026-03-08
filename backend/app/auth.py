@@ -42,5 +42,5 @@ def decode_access_token(token: str) -> Optional[dict]:
             return None
         payload = jwt.decode(token, settings.jwt_secret_key, algorithms=["HS256"])
         return payload
-    except jwt.InvalidTokenError:
+    except JWTError:
         return None
