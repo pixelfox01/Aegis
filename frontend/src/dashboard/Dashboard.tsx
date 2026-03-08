@@ -13,6 +13,9 @@ const SCORE_MAP: Record<string, Record<string, number>> = {
 	data_retention:     { strict: 100, moderate: 50, relaxed: 0 },
 	tracking_cookies:   { block: 100, limit: 50, allow: 0 },
 	account_deletion:   { critical: 100, nice: 50, indifferent: 0 },
+	data_encryption:    { essential: 100, preferred: 50, indifferent: 0 },
+	gdpr_rights:        { important: 100, somewhat: 50, unconcerned: 0 },
+	opt_out:            { required: 100, nice: 50, unnecessary: 0 },
 };
 
 function computeScore(prefs: Record<string, string>): number {
@@ -221,6 +224,8 @@ export default function Dashboard() {
 					background: none; border-left: none; border-right: none; border-top: none;
 					width: 100%; cursor: pointer; text-align: left;
 					transition: background 0.2s ease, border-color 0.5s ease;
+					overflow-y: auto;
+					min-height: 0;
 				}
 				.prefs-toggle:hover { background: var(--btn-hover-bg); }
 
@@ -311,6 +316,37 @@ export default function Dashboard() {
 				.panel-footer {
 					padding: 16px 24px; border-top: 1px solid var(--border);
 					transition: border-color 0.5s ease;
+				}
+				.prefs-action-btn {
+					font-family: 'DM Mono', monospace; font-size: 10px;
+					letter-spacing: 0.07em; text-transform: uppercase;
+					background: none; border: 1px solid var(--border); border-radius: 3px;
+					padding: 6px 12px; cursor: pointer;
+					transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+				}
+				.prefs-action-btn.save {
+					color: var(--ink); border-color: var(--ink);
+				}
+				.prefs-action-btn.save:hover { background: var(--ink); color: var(--bg); }
+				.prefs-action-btn.save:disabled { opacity: 0.45; cursor: default; }
+				.prefs-action-btn.cancel {
+					color: var(--muted); border-color: var(--border);
+				}
+				.prefs-action-btn.cancel:hover { color: var(--ink); border-color: var(--muted); }
+				.prefs-edit-link {
+					font-family: 'DM Mono', monospace; font-size: 9px;
+					letter-spacing: 0.1em; text-transform: uppercase;
+					color: var(--muted); background: none; border: none;
+					cursor: pointer; padding: 10px 0 2px; display: block;
+					transition: color 0.2s ease;
+				}
+				.prefs-edit-link:hover { color: var(--ink); }
+
+				.panel-footer {
+					padding: 16px 24px; border-top: 1px solid var(--border);
+					transition: border-color 0.5s ease;
+					margin-top: auto;
+					flex-shrink: 0;
 				}
 				.panel-footer-btn {
 					font-family: 'DM Mono', monospace; font-size: 10px;

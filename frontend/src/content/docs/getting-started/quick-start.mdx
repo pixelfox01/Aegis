@@ -1,11 +1,11 @@
 ---
 title: "Quick Start"
-description: "Get Aegis up and running in minutes with Docker Compose"
+description: "Get Raven up and running in minutes with Docker Compose"
 ---
 
 # Quick Start
 
-Get Aegis running on your infrastructure in just a few minutes.
+Get Raven running on your infrastructure in just a few minutes.
 
 ## Prerequisites
 
@@ -19,8 +19,8 @@ Get Aegis running on your infrastructure in just a few minutes.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/aegis.git
-cd aegis
+git clone https://github.com/your-org/raven.git
+cd raven
 ```
 
 ### 2. Configure Environment
@@ -39,7 +39,7 @@ JWT_SECRET_KEY=$(openssl rand -hex 32)
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
-### 3. Start Aegis
+### 3. Start Raven
 
 **Combined deployment (single container):**
 
@@ -53,7 +53,7 @@ docker-compose up -d
 docker-compose -f docker-compose.separate.yml up -d
 ```
 
-### 4. Access Aegis
+### 4. Access Raven
 
 Open your browser and navigate to:
 

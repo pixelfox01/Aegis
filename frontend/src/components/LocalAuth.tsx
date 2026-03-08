@@ -237,7 +237,7 @@ export default function LocalAuth({ onAuthSuccess }: LocalAuthProps) {
               {isLogin ? 'Welcome back' : 'Create admin account'}
             </h1>
             <p className="auth-subtitle">
-              {isLogin ? 'Sign in to your Aegis instance' : 'First-time setup for your instance'}
+              {isLogin ? 'Sign in to your Raven instance' : 'First-time setup for your instance'}
             </p>
           </div>
 

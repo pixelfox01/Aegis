@@ -1,11 +1,11 @@
 ---
 title: "Environment Variables"
-description: "Complete reference for configuring Aegis using environment variables"
+description: "Complete reference for configuring Raven using environment variables"
 ---
 
 # Environment Variables
 
-Configure Aegis using environment variables in your `.env` file.
+Configure Raven using environment variables in your `.env` file.
 
 ## Core Configuration
 
@@ -14,9 +14,9 @@ Configure Aegis using environment variables in your `.env` file.
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
 | `DATABASE_URL` | PostgreSQL connection string | Yes | - |
-| `POSTGRES_USER` | Database username | Yes | `aegis` |
+| `POSTGRES_USER` | Database username | Yes | `raven` |
 | `POSTGRES_PASSWORD` | Database password | Yes | - |
-| `POSTGRES_DB` | Database name | Yes | `aegis` |
+| `POSTGRES_DB` | Database name | Yes | `raven` |
 
 ### Authentication
 
@@ -76,7 +76,7 @@ Configure Aegis using environment variables in your `.env` file.
 
 ```bash
 # Database
-DATABASE_URL=postgresql://aegis:SecurePass123@db:5432/aegis
+DATABASE_URL=postgresql://raven:SecurePass123@db:5432/raven
 POSTGRES_PASSWORD=SecurePass123
 
 # Authentication
@@ -95,7 +95,7 @@ CORS_ORIGINS=http://localhost:8000
 
 ```bash
 # Database
-DATABASE_URL=postgresql://aegis:SecurePass123@db:5432/aegis
+DATABASE_URL=postgresql://raven:SecurePass123@db:5432/raven
 POSTGRES_PASSWORD=SecurePass123
 
 # Authentication
@@ -110,7 +110,7 @@ OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_MODEL=llama2
 
 # Server
-CORS_ORIGINS=http://localhost:8000,https://aegis.yourdomain.com
+CORS_ORIGINS=http://localhost:8000,https://raven.yourdomain.com
 PORT=8000
 
 # Optional

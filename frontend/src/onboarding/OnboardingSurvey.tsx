@@ -1,25 +1,61 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
-import surveyQuestions from "./surveyQuestions";
+import { surveyQuestionConfigs, SurveyQuestion } from "./surveyQuestions";
 import { env } from "../config/env";
 
 export default function OnboardingSurvey() {
 	const navigate = useNavigate();
-	const { getAccessTokenSilently } = useAuth0();
+	const { getAccessTokenSilently, user } = useAuth0();
 	const [step, setStep] = useState(0);
 	const [answers, setAnswers] = useState<Record<string, string>>({});
 	const [visible, setVisible] = useState(false);
 	const [dark, setDark] = useState(true);
 	const [saving, setSaving] = useState(false);
+	const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
+	const [loading, setLoading] = useState(true);
 
 	const total = surveyQuestions.length;
 	const current = surveyQuestions[step];
 
 	useEffect(() => {
-		const t = setTimeout(() => setVisible(true), 100);
-		return () => clearTimeout(t);
+		fetchSurveyQuestions();
 	}, []);
+
+	useEffect(() => {
+		if (!loading) {
+			const t = setTimeout(() => setVisible(true), 100);
+			return () => clearTimeout(t);
+		}
+	}, [loading]);
+
+	async function fetchSurveyQuestions() {
+		try {
+			const response = await fetch(`${env.apiUrl}/questions/survey`);
+			if (!response.ok) {
+				throw new Error('Failed to fetch survey questions');
+			}
+			const questions: { id: number; text: string; survey_key: string }[] = await response.json();
+			
+			const mappedQuestions: SurveyQuestion[] = questions
+				.map(q => {
+					const config = surveyQuestionConfigs[q.survey_key];
+					if (!config) return null;
+					
+					return {
+						id: q.survey_key,
+						...config
+					};
+				})
+				.filter((q): q is SurveyQuestion => q !== null);
+			
+			setSurveyQuestions(mappedQuestions);
+		} catch (error) {
+			console.error('Failed to load survey questions:', error);
+		} finally {
+			setLoading(false);
+		}
+	}
 
 	// fade-in reset when step changes
 	const [stepVisible, setStepVisible] = useState(false);
@@ -53,25 +89,48 @@ export default function OnboardingSurvey() {
 		finishSurvey(defaults);
 	}
 
+	if (loading) {
+		return (
+			<div className="survey-root theme-dark" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+				<p style={{ color: '#f0ede8', fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>Loading survey...</p>
+			</div>
+		);
+	}
+
+	if (surveyQuestions.length === 0) {
+		return (
+			<div className="survey-root theme-dark" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+				<p style={{ color: '#f0ede8', fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>No survey questions available.</p>
+			</div>
+		);
+	}
+
 	async function finishSurvey(prefs: Record<string, string>) {
 		setSaving(true);
 		
 		try {
 			let token: string | null = null;
+			let userSub: string | undefined;
 			
 			if (env.authMode === 'auth0') {
 				token = await getAccessTokenSilently();
+				userSub = user?.sub;
 			} else {
 				token = localStorage.getItem('aegis_token');
 			}
 			
 			if (token) {
+				const headers: Record<string, string> = {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${token}`
+				};
+				if (userSub) {
+					headers['X-User-Sub'] = userSub;
+				}
+				
 				await fetch(`${env.apiUrl}/users/preferences`, {
 					method: 'PUT',
-					headers: {
-						'Content-Type': 'application/json',
-						'Authorization': `Bearer ${token}`
-					},
+					headers,
 					body: JSON.stringify({ preferences: prefs })
 				});
 			}
