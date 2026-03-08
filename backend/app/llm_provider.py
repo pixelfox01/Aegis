@@ -65,7 +65,7 @@ class LLMProvider(ABC):
 class GeminiProvider(LLMProvider):
     def __init__(self):
         if not settings.gemini_api_key:
-            raise ValueError("Gemini API key not configured!")
+            raise ValueError("GEMINI_API_KEY environment variable is required when using gemini provider")
         self.client = genai.Client(api_key=settings.gemini_api_key)
 
     def generate_summaries(self, agreement_text: str, questions: list[str]):

@@ -1,203 +1,246 @@
 ---
 title: "Docker Compose Configuration"
-description: "Configure and customize your Aegis deployment with Docker Compose for production and development"
+description: "Deploy Aegis with Docker Compose - combined or separate containers"
 ---
 
 # Docker Compose Configuration
 
-Learn how to configure and customize your Aegis deployment using Docker Compose.
+Aegis provides two deployment modes via Docker Compose.
 
-## Default Configuration
+## Deployment Modes
 
-Aegis provides a default `docker-compose.yml` that works out of the box:
+### Combined Deployment (Recommended)
+
+Single container serving both frontend and backend on port 8000.
+
+**Pros:**
+- Simpler setup
+- Single port to expose
+- Lower resource usage
+
+**Cons:**
+- Less flexibility
+- Cannot scale frontend/backend independently
+
+### Separate Deployment
+
+Frontend and backend in separate containers.
+
+**Pros:**
+- Can scale independently
+- More flexible configuration
+- Better for production at scale
+
+**Cons:**
+- More complex setup
+- Need to expose multiple ports
+
+## Combined Deployment
+
+Use the default `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  aegis:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://aegis:${POSTGRES_PASSWORD}@db:5432/aegis
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - AUTH_MODE=${AUTH_MODE:-local}
+      - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama2}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:8000}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=aegis
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=aegis
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+```
+
+Start with:
+
+```bash
+docker-compose up -d
+```
+
+Access at: **http://localhost:8000**
+
+## Separate Deployment
+
+Use `docker-compose.separate.yml`:
 
 ```yaml
 version: '3.8'
 
 services:
   frontend:
-    image: aegis/frontend:latest
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL=http://localhost:8000
+        - VITE_AUTH_MODE=${AUTH_MODE:-local}
     ports:
       - "3000:3000"
-    environment:
-      - VITE_API_URL=http://localhost:8000
-      - VITE_AUTH0_DOMAIN=${AUTH0_DOMAIN}
-      - VITE_AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
     depends_on:
       - backend
+    restart: unless-stopped
 
   backend:
-    image: aegis/backend:latest
+    build: ./backend
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://aegis:${DB_PASSWORD}@db:5432/aegis
-      - SECRET_KEY=${SECRET_KEY}
-      - AUTH0_DOMAIN=${AUTH0_DOMAIN}
-      - AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
+      - DATABASE_URL=postgresql://aegis:${POSTGRES_PASSWORD}@db:5432/aegis
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - AUTH_MODE=${AUTH_MODE:-local}
+      - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
   db:
-    image: postgres:16
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    image: postgres:16-alpine
     environment:
       - POSTGRES_USER=aegis
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=aegis
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
-  pgdata:
+  postgres_data:
 ```
 
-## Service Overview
+Start with:
 
-### Frontend Service
+```bash
+docker-compose -f docker-compose.separate.yml up -d
+```
 
-The React web application served via Nginx.
+Access at: **http://localhost:3000**
 
-**Key configurations:**
-- Port `3000` exposed to host
-- Environment variables for API URL and Auth0
-- Depends on backend service
+## Adding Ollama
 
-### Backend Service
+To use Ollama for local LLM processing, add this service:
 
-FastAPI server handling API requests.
+```yaml
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
 
-**Key configurations:**
-- Port `8000` exposed to host
-- Database connection via `DATABASE_URL`
-- Auth0 integration for authentication
+volumes:
+  ollama_data:
+```
 
-### Database Service
+Then set in your `.env`:
 
-PostgreSQL 16 for data persistence.
+```bash
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama2
+```
 
-**Key configurations:**
-- Data stored in `pgdata` volume
-- Credentials from environment variables
-- Internal port 5432 (not exposed to host)
+Pull a model:
+
+```bash
+docker exec -it aegis-ollama-1 ollama pull llama2
+```
 
 ## Customization
 
 ### Change Ports
 
-To use different ports:
-
 ```yaml
 services:
-  frontend:
+  aegis:
     ports:
-      - "8080:3000"  # Access on port 8080
-  
-  backend:
-    ports:
-      - "9000:8000"  # Access on port 9000
+      - "8080:8000"  # External:Internal
 ```
 
-<Warning>
-If you change the backend port, update `VITE_API_URL` in the frontend service accordingly.
-</Warning>
+### Add Volume Mounts
 
-### Add Redis for Caching
-
-Add Redis for session management and caching:
+For persistent file storage:
 
 ```yaml
 services:
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
+  aegis:
     volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
-
-  backend:
-    environment:
-      - REDIS_URL=redis://redis:6379
-
-volumes:
-  redis_data:
+      - ./data:/app/data
 ```
 
-### Configure Resource Limits
-
-Prevent services from consuming too many resources:
+### Resource Limits
 
 ```yaml
 services:
-  backend:
+  aegis:
     deploy:
       resources:
         limits:
           cpus: '2'
           memory: 2G
-        reservations:
-          cpus: '1'
-          memory: 1G
 ```
 
-## Production Considerations
+## Maintenance
 
-<AccordionGroup>
-  <Accordion title="Use specific version tags">
-    Instead of `latest`, pin specific versions:
-    
-    ```yaml
-    frontend:
-      image: aegis/frontend:v1.2.3
-    backend:
-      image: aegis/backend:v1.2.3
-    ```
-  </Accordion>
+### View Logs
 
-  <Accordion title="Set restart policies">
-    Ensure services restart on failure:
-    
-    ```yaml
-    services:
-      backend:
-        restart: unless-stopped
-    ```
-  </Accordion>
-
-  <Accordion title="Use secrets for sensitive data">
-    Use Docker secrets instead of environment variables:
-    
-    ```yaml
-    services:
-      backend:
-        secrets:
-          - db_password
-          - secret_key
-
-    secrets:
-      db_password:
-        file: ./secrets/db_password.txt
-      secret_key:
-        file: ./secrets/secret_key.txt
-    ```
-  </Accordion>
-</AccordionGroup>
-
-## Health Checks
-
-Add health checks to monitor service status:
-
-```yaml
-services:
-  backend:
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+```bash
+docker-compose logs -f
+docker-compose logs -f aegis  # specific service
 ```
 
-<Info>
-Health checks help Docker Compose determine when services are ready to accept traffic.
-</Info>
+### Restart Services
+
+```bash
+docker-compose restart
+```
+
+### Update Images
+
+```bash
+docker-compose pull
+docker-compose up -d
+```
+
+### Backup Database
+
+```bash
+docker exec aegis-db-1 pg_dump -U aegis aegis > backup.sql
+```
