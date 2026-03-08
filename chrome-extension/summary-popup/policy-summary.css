@@ -297,6 +297,37 @@
 .raven-close:hover { color: var(--r-ink); }
 .raven-close svg { width: 16px; height: 16px; display: block; }
 
+/* ── Policy type tabs ── */
+
+.raven-tabs {
+  display: flex;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--r-border);
+  transition: border-color 0.4s ease;
+}
+
+.raven-tab {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--r-muted);
+  padding: 10px 14px 8px;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.raven-tab:hover { color: var(--r-ink); }
+
+.raven-tab--active {
+  color: var(--r-ink);
+  border-bottom-color: var(--r-accent);
+}
+
 /* ── Summary items ── */
 
 .raven-items {

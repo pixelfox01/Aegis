@@ -155,6 +155,7 @@ function buildOverlayHTML(data) {
     const site = escapeHTML(extractCompanyName(data.site || ''));
     const scoreDisplay = data.error ? '—' : '0';
     const readBtnStyle = data.error ? ' style="display:none"' : '';
+    const activeType = data.policyType || 'pp';
 
     return `
       <div class="raven-overlay" id="ravenOverlay">
@@ -188,7 +189,12 @@ function buildOverlayHTML(data) {
             </div>
           </div>
 
-          <ul class="raven-items">
+          <div class="raven-tabs">
+            <button class="raven-tab${activeType === 'pp' ? ' raven-tab--active' : ''}" data-type="pp">Privacy Policy</button>
+            <button class="raven-tab${activeType === 'tos' ? ' raven-tab--active' : ''}" data-type="tos">Terms of Service</button>
+          </div>
+
+          <ul class="raven-items" id="ravenItemsList">
             ${buildItemsHTML(data)}
           </ul>
 
@@ -267,11 +273,51 @@ function showRavenOverlay(data) {
     wrapper.querySelector('#ravenDismiss')?.addEventListener('click', dismiss);
 
     // Collapsible items
-    wrapper.querySelectorAll('.raven-item-toggle').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const item = btn.closest('.raven-item');
-            const expanded = item.classList.toggle('raven-item--open');
-            btn.setAttribute('aria-expanded', expanded);
+    function wireCollapsibles(root) {
+        root.querySelectorAll('.raven-item-toggle').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const item = btn.closest('.raven-item');
+                const expanded = item.classList.toggle('raven-item--open');
+                btn.setAttribute('aria-expanded', expanded);
+            });
+        });
+    }
+    wireCollapsibles(wrapper);
+
+    // Policy type tab switching
+    wrapper.querySelectorAll('.raven-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+            const type = tab.dataset.type;
+            wrapper.querySelectorAll('.raven-tab').forEach(t => t.classList.remove('raven-tab--active'));
+            tab.classList.add('raven-tab--active');
+
+            const itemsList = wrapper.querySelector('#ravenItemsList');
+            if (itemsList) {
+                itemsList.innerHTML = `
+                  <li class="raven-item">
+                    <span class="raven-dot"></span>
+                    <div class="raven-item-body">
+                      <span class="raven-item-label" style="opacity:0.4">Loading...</span>
+                    </div>
+                  </li>`;
+            }
+
+            chrome.runtime.sendMessage(
+                { type: 'GET_POLICY_DATA', payload: { hostname: data.site, agreementType: type } },
+                (response) => {
+                    if (!itemsList) return;
+                    if (chrome.runtime.lastError || !response || response.error) {
+                        itemsList.innerHTML = buildItemsHTML({ error: true });
+                    } else {
+                        itemsList.innerHTML = buildItemsHTML(response);
+                        wireCollapsibles(itemsList);
+                        const scoreEl = wrapper.querySelector('#ravenScore');
+                        if (scoreEl && typeof response.score === 'number') {
+                            animateRavenScore(response.score, wrapper);
+                        }
+                    }
+                }
+            );
         });
     });
 

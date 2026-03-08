@@ -63,56 +63,76 @@ function deriveScore(answers) {
 function concernLevelToDotClass(level) {
   if (level === 'high') return 'dot-bad';
   if (level === 'medium') return 'dot-warn';
-  return 'dot-ok';
+  if (level === 'low') return 'dot-ok';
+  return 'dot-muted';
+}
+
+// ── Fixed metric definitions ────────────────────────────────────────────────
+// Each metric scans the API's question list for keyword matches and takes the
+// concern_level of the first matching answer.
+
+const METRICS = {
+  cookies:  ['cookie', 'cookies', 'non-essential', 'consent'],
+  trackers: ['track', 'tracker', 'analytics', 'fingerprint', 'behavioral', 'advertising'],
+  services: ['location', 'geolocation', 'microphone', 'camera', 'permission', 'sensor'],
+};
+
+const metricDots = {
+  cookies:  document.querySelector('#metricCookies .dot'),
+  trackers: document.querySelector('#metricTrackers .dot'),
+  services: document.querySelector('#metricServices .dot'),
+  account:  document.querySelector('#metricAccount .dot'),
+};
+
+const scorePct = document.getElementById("scorePct");
+
+function findConcernForMetric(questions, answers, keywords) {
+  if (!questions?.length) return null;
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i].toLowerCase();
+    if (keywords.some(kw => q.includes(kw))) return answers[i]?.concern_level ?? null;
+  }
+  return null;
 }
 
 // ── State renderers ────────────────────────────────────────────────────────
 
-const breakdownRows = document.querySelectorAll(".breakdown-row");
-
 function setLoadingState() {
   scoreNum.textContent = "—";
+  scorePct.style.visibility = "hidden";
   ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
-  breakdownRows.forEach((row) => {
-    row.querySelector(".dot").className = "dot dot-loading";
-    row.querySelector(".dim-text").textContent = "Loading...";
-    row.style.display = "";
-  });
+  metricDots.cookies?.setAttribute  ('class', 'dot dot-loading');
+  metricDots.trackers?.setAttribute ('class', 'dot dot-loading');
+  metricDots.services?.setAttribute ('class', 'dot dot-loading');
+  metricDots.account?.setAttribute  ('class', 'dot dot-muted');
 }
 
 function setErrorState() {
   scoreNum.textContent = "—";
+  scorePct.style.visibility = "hidden";
   ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
-  breakdownRows.forEach((row) => {
-    row.querySelector(".dot").className = "dot dot-loading";
-    row.querySelector(".dim-text").textContent = "Unavailable";
-    row.style.display = "";
-  });
+  metricDots.cookies?.setAttribute  ('class', 'dot dot-muted');
+  metricDots.trackers?.setAttribute ('class', 'dot dot-muted');
+  metricDots.services?.setAttribute ('class', 'dot dot-muted');
+  metricDots.account?.setAttribute  ('class', 'dot dot-muted');
 }
 
 function renderData(response) {
-  const score = deriveScore(response.answers);
-  animateScore(score);
+  animateScore(deriveScore(response.answers));
+  scorePct.style.visibility = "";
 
-  const limit = Math.min(breakdownRows.length, response.questions.length);
-
-  for (let i = 0; i < limit; i++) {
-    const level = response.answers[i]?.concern_level;
-    breakdownRows[i].querySelector(".dim-label").textContent = response.questions[i];
-    breakdownRows[i].querySelector(".dot").className = `dot ${concernLevelToDotClass(level)}`;
-    breakdownRows[i].querySelector(".dim-text").textContent = response.answers[i]?.summary_text || "";
-    breakdownRows[i].style.display = "";
+  for (const [metric, keywords] of Object.entries(METRICS)) {
+    const level = findConcernForMetric(response.questions, response.answers, keywords);
+    metricDots[metric]?.setAttribute('class', `dot ${concernLevelToDotClass(level)}`);
   }
-
-  // Hide unused rows if API returns fewer items than the 5 hardcoded rows
-  for (let i = limit; i < breakdownRows.length; i++) {
-    breakdownRows[i].style.display = "none";
-  }
+  // account is always placeholder
+  metricDots.account?.setAttribute('class', 'dot dot-muted');
 }
 
 // ── Active tab domain + data fetch ─────────────────────────────────────────
 
 const siteDomain = document.getElementById("siteDomain");
+const faviconImg = document.getElementById("faviconImg");
 const viewFullReportBtn = document.querySelector(".footer-link");
 
 let cachedPolicyData = null;
@@ -122,6 +142,12 @@ setLoadingState();
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const url = tabs[0]?.url;
   if (!url) { setErrorState(); return; }
+
+  // Favicon
+  const favIconUrl = tabs[0]?.favIconUrl;
+  if (favIconUrl) {
+    faviconImg.src = favIconUrl;
+  }
 
   let hostname;
   try {

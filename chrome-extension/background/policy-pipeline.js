@@ -3,14 +3,15 @@ import { getPolicySummary } from '../utils/api-client.js';
 // ── In-memory cache ───────────────────────────────────────────────────────────
 // Keyed by hostname. Cleared on service worker restart (expected MV3 behaviour).
 
-const summaryCache = new Map(); // hostname → { data, timestamp }
+const summaryCache = new Map(); // `${hostname}:${policyType}` → { data, timestamp }
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-function getCached(hostname) {
-    const entry = summaryCache.get(hostname);
+function getCached(hostname, policyType) {
+    const key = `${hostname}:${policyType}`;
+    const entry = summaryCache.get(key);
     if (!entry) return null;
     if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
-        summaryCache.delete(hostname);
+        summaryCache.delete(key);
         return null;
     }
     return entry.data;
@@ -26,9 +27,10 @@ function deriveScore(answers) {
 }
 
 async function getCachedOrFetch(hostname, policyType) {
-    const cached = getCached(hostname);
+    const key = `${hostname}:${policyType}`;
+    const cached = getCached(hostname, policyType);
     if (cached) {
-        console.log('[Raven] Cache hit for', hostname);
+        console.log('[Raven] Cache hit for', hostname, policyType);
         return cached;
     }
 
@@ -38,12 +40,13 @@ async function getCachedOrFetch(hostname, policyType) {
 
     const data = {
         site: hostname,
+        policyType,
         score: deriveScore(raw.answers),
         questions: raw.questions,
         answers: raw.answers,
     };
     console.log('[Raven] Processed data sent to UI:', data);
-    summaryCache.set(hostname, { data, timestamp: Date.now() });
+    summaryCache.set(key, { data, timestamp: Date.now() });
     return data;
 }
 
@@ -72,10 +75,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.type === 'GET_POLICY_DATA') {
-        const { hostname } = message.payload;
+        const { hostname, agreementType = 'pp' } = message.payload;
 
-        console.log('[Raven] GET_POLICY_DATA — hostname:', hostname);
-        getCachedOrFetch(hostname, 'pp')
+        console.log('[Raven] GET_POLICY_DATA — hostname:', hostname, '| agreementType:', agreementType);
+        getCachedOrFetch(hostname, agreementType)
             .then((data) => sendResponse(data))
             .catch(() => sendResponse({ error: true }));
 
