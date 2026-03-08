@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 import surveyQuestions from "./surveyQuestions";
+import { env } from "../config/env";
 
 export default function OnboardingSurvey() {
 	const navigate = useNavigate();
+	const { getAccessTokenSilently } = useAuth0();
 	const [step, setStep] = useState(0);
 	const [answers, setAnswers] = useState<Record<string, string>>({});
 	const [visible, setVisible] = useState(false);
 	const [dark, setDark] = useState(true);
+	const [saving, setSaving] = useState(false);
 
 	const total = surveyQuestions.length;
 	const current = surveyQuestions[step];
@@ -49,9 +53,35 @@ export default function OnboardingSurvey() {
 		finishSurvey(defaults);
 	}
 
-	function finishSurvey(prefs: Record<string, string>) {
+	async function finishSurvey(prefs: Record<string, string>) {
+		setSaving(true);
+		
+		try {
+			let token: string | null = null;
+			
+			if (env.authMode === 'auth0') {
+				token = await getAccessTokenSilently();
+			} else {
+				token = localStorage.getItem('aegis_token');
+			}
+			
+			if (token) {
+				await fetch(`${env.apiUrl}/users/preferences`, {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${token}`
+					},
+					body: JSON.stringify({ preferences: prefs })
+				});
+			}
+		} catch (error) {
+			console.error('Failed to save preferences:', error);
+		}
+		
 		localStorage.setItem("raven_preferences", JSON.stringify(prefs));
 		localStorage.setItem("raven_onboarded", "true");
+		setSaving(false);
 		navigate("/dashboard", { replace: true });
 	}
 
@@ -354,9 +384,9 @@ export default function OnboardingSurvey() {
 								<button
 									className="action-btn primary"
 									onClick={handleNext}
-									disabled={!answers[current.id]}
+									disabled={!answers[current.id] || saving}
 								>
-									{step === total - 1 ? "Finish" : "Continue"}
+									{saving ? "Saving..." : step === total - 1 ? "Finish" : "Continue"}
 								</button>
 							</div>
 						</div>

@@ -1,5 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
+import { env } from "../config/env";
+import { useNavigate } from "react-router-dom";
 
 /* ── Score computation from survey preferences ── */
 
@@ -131,14 +133,24 @@ function HistoryChart({ data, currentScore, dark }: { data: ScorePoint[]; curren
 /* ── Component ── */
 
 export default function Dashboard() {
-	const { user, logout } = useAuth0();
+	const auth0Context = env.authMode === 'auth0' ? useAuth0() : null;
+	const navigate = useNavigate();
 	const [visible, setVisible] = useState(false);
 	const [dark, setDark] = useState(true);
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [animatedScore, setAnimatedScore] = useState(0);
 
-	const handleLogout = () =>
-		logout({ logoutParams: { returnTo: window.location.origin } });
+	const handleLogout = () => {
+		if (env.authMode === 'auth0' && auth0Context) {
+			auth0Context.logout({ logoutParams: { returnTo: window.location.origin } });
+		} else {
+			localStorage.removeItem('aegis_token');
+			localStorage.removeItem('aegis_user_id');
+			localStorage.removeItem('raven_onboarded');
+			localStorage.removeItem('raven_preferences');
+			navigate('/', { replace: true });
+		}
+	};
 
 	const prefs: Record<string, string> = useMemo(() => {
 		try {
@@ -609,9 +621,9 @@ export default function Dashboard() {
 					<div className={`dash-top ${visible ? "visible" : ""}`}>
 						<div className="dash-greeting">
 							<h1>
-								Welcome{user?.given_name ? `, ${user.given_name}` : ""}<em>.</em>
+								Welcome{auth0Context?.user?.given_name ? `, ${auth0Context.user.given_name}` : ""}<em>.</em>
 							</h1>
-							<p>{user?.email}</p>
+							<p>{auth0Context?.user?.email || ""}</p>
 						</div>
 
 						<div className="score-compact">

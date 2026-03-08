@@ -7,6 +7,7 @@ import Dashboard from "./dashboard/Dashboard";
 import Docs from './docs/Docs';
 import LocalAuth from './components/LocalAuth';
 import { env } from './config/env';
+import { useUser } from './hooks/useUser';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
 	if (env.authMode === 'auth0') {
@@ -43,8 +44,9 @@ function AuthRedirect() {
 
 function Auth0Redirect() {
 	const { isAuthenticated, isLoading } = useAuth0();
+	const { loading: userLoading } = useUser();
 
-	if (isLoading) return null;
+	if (isLoading || userLoading) return null;
 
 	if (isAuthenticated) {
 		const onboarded = localStorage.getItem("raven_onboarded") === "true";
@@ -56,6 +58,7 @@ function Auth0Redirect() {
 
 function LocalAuthRedirect() {
 	const [token, setToken] = useState<string | null>(localStorage.getItem('aegis_token'));
+	const { loading: userLoading } = useUser();
 
 	useEffect(() => {
 		const handleStorageChange = () => {
@@ -64,6 +67,8 @@ function LocalAuthRedirect() {
 		window.addEventListener('storage', handleStorageChange);
 		return () => window.removeEventListener('storage', handleStorageChange);
 	}, []);
+
+	if (userLoading && token) return null;
 
 	if (token) {
 		const onboarded = localStorage.getItem("raven_onboarded") === "true";
