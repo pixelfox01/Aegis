@@ -87,9 +87,7 @@ class GeminiProvider(LLMProvider):
         )
 
         result = json.loads(response.text)
-        answers = [item["answer"] for item in result["answers"]]
-
-        return answers
+        return result["answers"]
 
 
 def get_llm_provider():

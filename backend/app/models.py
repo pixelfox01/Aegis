@@ -24,6 +24,8 @@ class Summary(SQLModel, table=True):
     agreement_id: int = Field(foreign_key="agreement.id")
 
     summary_text: str
+    concern_level: str
+    quote: str | None = None
 
     question: Question = Relationship(back_populates="summaries")
     agreement: Agreement = Relationship(back_populates="summaries")

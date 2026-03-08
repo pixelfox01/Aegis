@@ -52,7 +52,11 @@ def summarize(request: SummarizeRequest, session: SessionDep):
 
         for question, answer in zip(questions, answers):
             summary = Summary(
-                question_id=question.id, agreement_id=agreement.id, summary_text=answer
+                question_id=question.id,
+                agreement_id=agreement.id,
+                summary_text=answer["answer"],
+                concern_level=answer["concern_level"],
+                quote=answer.get("quote"),
             )
             session.add(summary)
 
