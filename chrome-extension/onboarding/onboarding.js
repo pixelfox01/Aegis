@@ -62,45 +62,57 @@ import {
     step.style.animation = '';
   }
   
-  // ── Connect via Dashboard (Auth0 web auth flow) ────────────────────────────
-  // Opens the dashboard login page. After the user authenticates, the dashboard
-  // redirects to the extension's callback URL with a token parameter.
-  // If chrome.identity is not available (shouldn't happen in MV3), falls back
-  // to opening the dashboard in a new tab.
+  // ── Connect via Auth0 (Direct OAuth flow) ─────────────────────────────────
+  // Opens Auth0 login directly using chrome.identity.launchWebAuthFlow
+  // After authentication, Auth0 redirects to the extension's callback URL
+  // with access_token in the URL hash
   
-  btnConnect.addEventListener('click', () => {
-    // Try the launchWebAuthFlow approach first
-    // The dashboard needs to support redirecting to AUTH_CALLBACK_URL with ?token=...
-    const loginUrl = `${DASHBOARD_URL}/auth/extension-login?redirect_uri=${encodeURIComponent(AUTH_CALLBACK_URL)}`;
-  
-    if (chrome.identity?.launchWebAuthFlow) {
-      chrome.identity.launchWebAuthFlow(
-        { url: loginUrl, interactive: true },
-        async (redirectUrl) => {
-          if (chrome.runtime.lastError || !redirectUrl) {
-            // User closed the window or flow failed — fall back to manual
-            showStep(stepToken);
-            return;
-          }
-  
-          try {
-            const params = new URL(redirectUrl).searchParams;
-            const token = params.get('token');
-            if (token) {
-              await saveAndFinish(token);
-            } else {
-              showStep(stepToken);
-            }
-          } catch {
-            showStep(stepToken);
-          }
-        }
-      );
-    } else {
-      // Fallback: open dashboard in a new tab, show manual entry
-      chrome.tabs.create({ url: `${DASHBOARD_URL}/auth/login` });
+  btnConnect.addEventListener('click', async () => {
+    if (!chrome.identity?.launchWebAuthFlow) {
+      // Fallback to manual entry if chrome.identity not available
       showStep(stepToken);
+      return;
     }
+  
+    // Construct Auth0 authorize URL
+    const auth0Params = new URLSearchParams({
+      client_id: CONFIG.AUTH0_CLIENT_ID,
+      response_type: 'token',
+      redirect_uri: AUTH_CALLBACK_URL,
+      scope: 'openid profile email',
+      prompt: 'login'
+    });
+    
+    const loginUrl = `https://${CONFIG.AUTH0_DOMAIN}/authorize?${auth0Params.toString()}`;
+  
+    chrome.identity.launchWebAuthFlow(
+      { url: loginUrl, interactive: true },
+      async (redirectUrl) => {
+        if (chrome.runtime.lastError || !redirectUrl) {
+          // User closed the window or flow failed — fall back to manual
+          showStep(stepToken);
+          return;
+        }
+  
+        try {
+          // Auth0 returns token in URL hash (#access_token=...)
+          const hashParams = new URLSearchParams(redirectUrl.split('#')[1]);
+          const token = hashParams.get('access_token');
+          
+          if (token) {
+            // Save API URL from config
+            await setApiUrl(API_URL);
+            await setSelfHosted(false);
+            await saveAndFinish(token);
+          } else {
+            showStep(stepToken);
+          }
+        } catch (error) {
+          console.error('Auth0 flow error:', error);
+          showStep(stepToken);
+        }
+      }
+    );
   });
   
   // ── Manual token entry ─────────────────────────────────────────────────────
@@ -181,7 +193,8 @@ import {
         ? { 'X-API-Key': token }
         : { 'Authorization': `Bearer ${token}` };
   
-      const response = await fetch(`${baseUrl}/accounts`, {
+      // Use a lightweight endpoint to verify token
+      const response = await fetch(`${baseUrl}/api/users/me`, {
         headers: { 'Content-Type': 'application/json', ...authHeader }
       });
   
@@ -214,5 +227,5 @@ import {
   // ── Logo link ──────────────────────────────────────────────────────────────
   
   document.getElementById('ravenLogo').addEventListener('click', () => {
-    chrome.tabs.create({ url: DASHBOARD_URL });
+    chrome.tabs.create({ url: API_URL });
   });

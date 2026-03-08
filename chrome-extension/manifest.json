@@ -53,6 +53,6 @@
   ],
 
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; connect-src 'self' http://localhost:8000; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; img-src 'self' data: https:"
+    "extension_pages": "default-src 'self'; connect-src 'self' http://localhost:8000 https://*.auth0.com https://*.chromiumapp.org; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; img-src 'self' data: https:"
   }
 }
