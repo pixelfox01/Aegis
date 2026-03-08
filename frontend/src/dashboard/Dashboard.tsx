@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { env } from "../config/env";
 import { useNavigate } from "react-router-dom";
+import { useLinkedServices } from "../hooks/useLinkedServices";
 
 /* ── Score computation from survey preferences ── */
 
@@ -25,23 +26,6 @@ function computeScore(prefs: Record<string, string>): number {
 }
 
 /* ── Mock data ── */
-
-interface LinkedService {
-	name: string;
-	domain: string;
-	linkedAt: string;
-}
-
-const MOCK_SERVICES: LinkedService[] = [
-	{ name: "Google",      domain: "google.com",      linkedAt: "2026-01-10" },
-	{ name: "Discord",     domain: "discord.com",     linkedAt: "2026-01-22" },
-	{ name: "Spotify",     domain: "spotify.com",     linkedAt: "2026-02-03" },
-	{ name: "GitHub",      domain: "github.com",      linkedAt: "2026-02-14" },
-	{ name: "Amazon",      domain: "amazon.com",      linkedAt: "2026-02-20" },
-	{ name: "Reddit",      domain: "reddit.com",      linkedAt: "2026-02-28" },
-	{ name: "Twitch",      domain: "twitch.tv",       linkedAt: "2026-03-01" },
-	{ name: "LinkedIn",    domain: "linkedin.com",    linkedAt: "2026-03-05" },
-];
 
 interface ScorePoint {
 	date: string;
@@ -124,6 +108,7 @@ function HistoryChart({ data, currentScore, dark }: { data: ScorePoint[]; curren
 export default function Dashboard() {
 	const auth0Context = env.authMode === 'auth0' ? useAuth0() : null;
 	const navigate = useNavigate();
+	const { services, loading: servicesLoading } = useLinkedServices();
 	const [visible, setVisible] = useState(false);
 	const [dark, setDark] = useState(true);
 	const [animatedScore, setAnimatedScore] = useState(0);
@@ -313,6 +298,11 @@ export default function Dashboard() {
 				}
 				.svc-date {
 					font-size: 9px; color: var(--muted); letter-spacing: 0.04em;
+					transition: color 0.5s ease;
+				}
+				.svc-loading {
+					font-size: 10px; color: var(--muted); letter-spacing: 0.06em;
+					padding: 8px 0;
 					transition: color 0.5s ease;
 				}
 
@@ -542,8 +532,12 @@ export default function Dashboard() {
 					</nav>
 
 					<div className="panel-services">
-						<p className="panel-label">Linked services ({MOCK_SERVICES.length})</p>
-						{MOCK_SERVICES.map((svc) => (
+						<p className="panel-label">
+							Linked services{!servicesLoading && ` (${services.length})`}
+						</p>
+						{servicesLoading ? (
+							<p className="svc-loading">Loading…</p>
+						) : services.map((svc) => (
 							<div className="svc-row" key={svc.domain}>
 								<div className="svc-info">
 									<span className="svc-name">{svc.name}</span>
