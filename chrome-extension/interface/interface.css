@@ -361,11 +361,19 @@ body {
   transition: color 0.4s ease;
 }
 
-.dim-right {
-  display: flex;
-  align-items: center;
-  gap: 7px;
+.metric-dismiss {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
 }
+
+.metric-dismiss:hover { color: var(--ink); }
 
 
 /* ── Footer ── */

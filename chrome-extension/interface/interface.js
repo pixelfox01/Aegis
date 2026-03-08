@@ -96,6 +96,17 @@ function setErrorState() {
   Object.values(metricRows).forEach(row => { if (row) row.style.display = 'none'; });
 }
 
+// Called when the API fails — show all rows so the user can still restrict
+function setFallbackState() {
+  scoreNum.textContent = "—";
+  ringFill.setAttribute("stroke-dashoffset", CIRCUMFERENCE);
+  if (metricRows.cookies)  metricRows.cookies.style.display  = '';
+  if (metricRows.trackers) metricRows.trackers.style.display = '';
+  if (metricRows.services) metricRows.services.style.display = '';
+  if (metricRows.account)  metricRows.account.style.display  = 'none';
+  if (breakdownEmpty) breakdownEmpty.style.display = 'none';
+}
+
 const breakdownEmpty = document.getElementById('breakdownEmpty');
 
 function renderData(response) {
@@ -118,6 +129,23 @@ function renderData(response) {
 
 document.getElementById("ravenLogo").addEventListener("click", () => {
   chrome.tabs.create({ url: "https://example.com" }); // TODO: update with landing page URL
+});
+
+// ── Metric dismiss buttons ─────────────────────────────────────────────────
+
+document.querySelector('.breakdown').addEventListener('click', (e) => {
+  const btn = e.target.closest('.metric-dismiss');
+  if (!btn) return;
+
+  chrome.runtime.sendMessage({ type: 'RESTRICT_METRIC', payload: { metric: btn.dataset.metric } });
+
+  const row = btn.closest('.breakdown-row');
+  if (row) row.style.display = 'none';
+
+  const anyVisible = ['cookies', 'trackers', 'services'].some(
+    k => metricRows[k] && metricRows[k].style.display !== 'none'
+  );
+  if (breakdownEmpty) breakdownEmpty.style.display = anyVisible ? 'none' : '';
 });
 
 // ── Active tab domain + data fetch ─────────────────────────────────────────
@@ -159,7 +187,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     { type: "GET_POLICY_DATA", payload: { hostname } },
     (response) => {
       if (chrome.runtime.lastError || !response || response.error) {
-        setErrorState();
+        setFallbackState();
       } else {
         cachedPolicyData = response;
         renderData(response);

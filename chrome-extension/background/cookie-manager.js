@@ -1,5 +1,5 @@
 // background/cookie-manager.js
-import { getCookiePreferences } from '../utils/storage.js';
+import { getCookiePreferences, setCookiePreferences } from '../utils/storage.js';
 
 const ESSENTIAL_NAME_PATTERNS = [
   'session', 'sess', 'auth', 'token', 'csrf', 'xsrf', 'cart', 'basket'
@@ -134,6 +134,32 @@ async function cleanupJavaScriptCookies(tabUrl) {
   });
 }
 
+// ─── Restrict a metric (called when user dismisses a row in the popup) ────────
+
+async function restrictMetric(metric) {
+  const preferences = await getCookiePreferences();
+  const updated = { ...preferences };
+
+  // Cookies and trackers are both addressed by disabling non-essential cookie categories
+  if (metric === 'cookies' || metric === 'trackers') {
+    updated.analytics = false;
+    updated.marketing = false;
+    updated.functional = false;
+  }
+  // 'services' (browser permissions) cannot be revoked via the cookies API;
+  // preferences are saved as a signal for future use.
+
+  await setCookiePreferences(updated);
+  await updateRules(updated);
+
+  // Clean up matching cookies on all open tabs immediately
+  chrome.tabs.query({ url: '<all_urls>' }, (tabs) => {
+    for (const tab of tabs) {
+      if (tab.url) cleanupJavaScriptCookies(tab.url);
+    }
+  });
+}
+
 // ─── Initialisation ──────────────────────────────────────────────────────────
 
 export async function initialiseCookieManager() {
@@ -143,6 +169,12 @@ export async function initialiseCookieManager() {
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url) {
       cleanupJavaScriptCookies(tab.url);
+    }
+  });
+
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'RESTRICT_METRIC') {
+      restrictMetric(message.payload.metric);
     }
   });
 }
