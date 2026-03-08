@@ -38,19 +38,33 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def decode_access_token(token: str) -> Optional[dict]:
     try:
+        print(f"[AUTH] Attempting to decode token (first 50 chars): {token[:50]}...")
+        
         # First, try to decode without verification to check if it's an Auth0 token
-        unverified_payload = jwt.decode(token, options={"verify_signature": False})
+        unverified_payload = jwt.decode(token, key="", options={"verify_signature": False})
+        print(f"[AUTH] Unverified payload: {unverified_payload}")
         
         # Check if this is an Auth0 token (has 'iss' claim with auth0.com domain)
         issuer = unverified_payload.get("iss", "")
-        if "auth0.com" in issuer or unverified_payload.get("sub", "").startswith("auth0|") or unverified_payload.get("sub", "").startswith("google-oauth2|"):
+        sub = unverified_payload.get("sub", "")
+        print(f"[AUTH] Token issuer: {issuer}, sub: {sub}")
+        
+        if "auth0.com" in issuer or sub.startswith("auth0|") or sub.startswith("google-oauth2|"):
             # Trust Auth0 tokens from the frontend (already validated by Auth0)
+            print(f"[AUTH] Detected Auth0 token, returning unverified payload")
             return unverified_payload
         
         # For local tokens, validate with our secret key
+        print(f"[AUTH] Not an Auth0 token, validating with local secret")
         if not settings.jwt_secret_key:
+            print(f"[AUTH] No JWT secret key configured")
             return None
         payload = jwt.decode(token, settings.jwt_secret_key, algorithms=["HS256"])
+        print(f"[AUTH] Successfully validated local token")
         return payload
-    except JWTError:
+    except JWTError as e:
+        print(f"[AUTH] JWT decode error: {e}")
+        return None
+    except Exception as e:
+        print(f"[AUTH] Unexpected error: {e}")
         return None

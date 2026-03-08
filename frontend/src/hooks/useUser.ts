@@ -25,7 +25,8 @@ function useAuth0User() {
               'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-              email: auth0User?.email
+              email: auth0User?.email,
+              sub: auth0User?.sub
             })
           })
 
