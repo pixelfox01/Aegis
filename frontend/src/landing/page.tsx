@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 
 export default function LandingPage() {
 	const [visible, setVisible] = useState(false);
 	const [dark, setDark] = useState(true);
 	const { loginWithRedirect, isLoading } = useAuth0();
+	const { scrollDirection, isTop } = useScrollDirection();
 
 	const handleSignUp = () =>
 		loginWithRedirect({ authorizationParams: { screen_hint: "signup" } });
@@ -15,6 +17,12 @@ export default function LandingPage() {
 		const t = setTimeout(() => setVisible(true), 100);
 		return () => clearTimeout(t);
 	}, []);
+
+	const navClasses = [
+		visible ? "visible" : "",
+		scrollDirection === 'down' && !isTop ? 'header-hidden' : '',
+		isTop ? 'header-at-top' : ''
+	].filter(Boolean).join(' ');
 
 	return (
 		<>
@@ -133,10 +141,15 @@ export default function LandingPage() {
           background: var(--nav-bg);
           opacity: 0;
           transform: translateY(-8px);
-          transition: opacity 0.6s ease, transform 0.6s ease,
+          transition: opacity 0.6s ease, transform 0.3s ease,
                       background 0.5s ease, border-color 0.5s ease;
+          position: sticky;
+          top: 0;
+          z-index: 100;
         }
         nav.visible { opacity: 1; transform: translateY(0); }
+        nav.header-hidden { transform: translateY(-100%); }
+        nav.header-at-top { transform: translateY(0); }
 
         .nav-logo {
           font-family: 'Cormorant Garamond', serif;
@@ -384,7 +397,7 @@ export default function LandingPage() {
 				<div className="grain" />
 
 				<div className="page">
-					<nav className={visible ? "visible" : ""}>
+					<nav className={navClasses}>
 						<a href="#" className="nav-logo">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
 								<path d="M12 2C6 2 3 7 3 12c0 3 1.5 5.5 4 7l5-9 5 9c2.5-1.5 4-4 4-7 0-5-3-10-9-10z" />

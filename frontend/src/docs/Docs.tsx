@@ -5,6 +5,8 @@ import { docsConfig } from '../config/docs'
 import { components } from '../mdx-components'
 import Breadcrumbs from '../components/docs/Breadcrumbs'
 import TableOfContents from '../components/docs/TableOfContents'
+import Header from '../components/Header'
+import { useScrollDirection } from '../hooks/useScrollDirection'
 import '../styles/docs.css'
 
 const docPages: Record<string, React.LazyExoticComponent<ComponentType>> = {
@@ -23,6 +25,7 @@ function Docs() {
   const [visible, setVisible] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const { scrollDirection, isTop } = useScrollDirection()
 
   const PageComponent = docPages[currentPage] || docPages['getting-started/introduction']
 
@@ -71,7 +74,9 @@ function Docs() {
       </div>
       <div className="grain" />
 
-      <div className="docs-container">
+      <Header visible={visible} dark={dark} setDark={setDark} />
+
+      <div className={`docs-container ${scrollDirection === 'down' && !isTop ? 'header-hidden' : ''}`}>
         {!sidebarOpen && (
           <button 
             className={`floating-sidebar-toggle ${visible ? 'visible' : ''}`}
@@ -81,16 +86,6 @@ function Docs() {
             →
           </button>
         )}
-
-        <button
-          className={`floating-theme-toggle ${visible ? 'visible' : ''}`}
-          onClick={() => setDark(!dark)}
-          title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          <span className="toggle-icon icon-sun">☀️</span>
-          <span className="toggle-icon icon-moon">🌙</span>
-          <span className="toggle-knob" />
-        </button>
         
         <aside className={`docs-sidebar ${sidebarOpen ? 'open' : 'closed'} ${visible ? 'visible' : ''}`}>
           <div className="docs-sidebar-header">
