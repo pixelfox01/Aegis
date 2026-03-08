@@ -7,7 +7,8 @@ const DEFAULTS = {
         functional: false,
         analytics: false,
         marketing: false
-    }
+    },
+    USER_PREFERENCES: null
 };
 
 export function getApiUrl() {
@@ -79,5 +80,48 @@ export function getOnboarded() {
 export function setOnboarded(value) {
     return new Promise((resolve) => {
         chrome.storage.sync.set({ ONBOARDED: value }, resolve);
+    });
+}
+
+// ── User Preferences (local cache) ────────────────────────────────────────────
+// Preferences are fetched from the API but cached locally so the content
+// script / overlay can access them without hitting the network every time.
+
+export function getCachedPreferences() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get('USER_PREFERENCES', (result) => {
+            resolve(result.USER_PREFERENCES || DEFAULTS.USER_PREFERENCES);
+        });
+    });
+}
+
+export function setCachedPreferences(preferences) {
+    return new Promise((resolve) => {
+        chrome.storage.local.set({ USER_PREFERENCES: preferences }, resolve);
+    });
+}
+
+// ── Accepted Sites Guard ─────────────────────────────────────────────────────
+// Tracks which hostnames have already been sent to the API as accepted,
+// preventing duplicate PUT calls within the same browser session.
+// Uses local storage so it persists across service worker restarts.
+
+export function getAcceptedSites() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get('ACCEPTED_SITES', (result) => {
+            resolve(result.ACCEPTED_SITES || []);
+        });
+    });
+}
+
+export function addAcceptedSite(hostname) {
+    return new Promise((resolve) => {
+        chrome.storage.local.get('ACCEPTED_SITES', (result) => {
+            const sites = result.ACCEPTED_SITES || [];
+            if (!sites.includes(hostname)) {
+                sites.push(hostname);
+            }
+            chrome.storage.local.set({ ACCEPTED_SITES: sites }, resolve);
+        });
     });
 }
